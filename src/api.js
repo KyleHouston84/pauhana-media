@@ -1,16 +1,28 @@
 import 'dotenv/config'; 
+import path from "path";
+import { fileURLToPath } from "url";
 import express from "express";
-import { summonStorm, isStormActive } from "./stormController.js";
+import { summonStorm, startEruption, isEventHappening } from "./stormController.js";
 
 const app = express();
 const API_KEY = process.env.PAUHANA_API_KEY;
 app.use(express.json());
 
+// ESM-safe __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve thunderstorm audio
+const AUDIO_DIR = path.join(__dirname, "../audio");
+console.log("Serving audio from:", AUDIO_DIR);
+
+app.use("/audio", express.static(AUDIO_DIR));
+
 // Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    stormActive: isStormActive(),
+    stormActive: isEventHappening(),
   });
 });
 
@@ -20,10 +32,10 @@ app.post("/storm", async (req, res) => {
     return res.status(403).json({ ok: false });
   }
   
-  if (isStormActive()) {
+  if (isEventHappening()) {
     return res.status(409).json({
       ok: false,
-      message: "Storm already active",
+      message: "An event is already active",
     });
   }
 
@@ -33,6 +45,28 @@ app.post("/storm", async (req, res) => {
   res.json({
     ok: true,
     message: "Storm summoned",
+  });
+});
+
+// Trigger eruption
+app.post("/erupt", async (req, res) => {
+  if (req.headers["x-api-key"] !== API_KEY) {
+    return res.status(403).json({ ok: false });
+  }
+  
+  if (isEventHappening()) {
+    return res.status(409).json({
+      ok: false,
+      message: "An event is already active",
+    });
+  }
+
+  // Fire-and-forget (don’t block HTTP)
+  startEruption();
+
+  res.json({
+    ok: true,
+    message: "Volcano eruption started",
   });
 });
 

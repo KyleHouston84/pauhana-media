@@ -1,6 +1,6 @@
 import { Gpio } from "onoff";
 
-const button = new Gpio(17, "in", "falling", {
+const button = new Gpio(529, "in", "falling", {
   debounceTimeout: 100,
 });
 

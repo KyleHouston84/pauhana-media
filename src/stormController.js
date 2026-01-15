@@ -1,14 +1,15 @@
 import { summonStorm as runStorm } from "./storm.js";
+import { startEruption as runEruption } from "./eruption.js";
 
-let stormActive = false;
+let eventHappening = false;
 
 export async function summonStorm() {
-  if (stormActive) {
-    console.log("⚠️ Storm already active");
+  if (eventHappening) {
+    console.log("⚠️ An event is already active");
     return false;
   }
 
-  stormActive = true;
+  eventHappening = true;
   console.log("🌩️ Storm summoned");
 
   try {
@@ -16,13 +17,34 @@ export async function summonStorm() {
   } catch (err) {
     console.error("Storm error:", err);
   } finally {
-    stormActive = false;
+    eventHappening = false;
     console.log("🌴 Storm ended");
   }
 
   return true;
 }
 
-export function isStormActive() {
-  return stormActive;
+export async function startEruption() {
+  if (eventHappening) {
+    console.log("⚠️ An event is already active");
+    return false;
+  }
+
+  eventHappening = true;
+  console.log("🌋 The volcano is erupting!");
+
+  try {
+    await runEruption();
+  } catch (err) {
+    console.error("Eruption error:", err);
+  } finally {
+    eventHappening = false;
+    console.log("🌴 Eruption ended");
+  }
+
+  return true;
+}
+
+export function isEventHappening() {
+  return eventHappening;
 }
