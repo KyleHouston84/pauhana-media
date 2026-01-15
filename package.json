@@ -4,13 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/main.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "node-fetch": "^3.3.2",
+    "onoff": "^6.0.3",
     "sonos": "^1.14.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.8"
   }
 }

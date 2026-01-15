@@ -1,0 +1,1 @@
+export const SONOS_STEPS = 20;
