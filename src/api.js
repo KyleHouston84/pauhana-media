@@ -1,8 +1,8 @@
-import 'dotenv/config'; 
+import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
-import { summonStorm, startEruption, isEventHappening } from "./stormController.js";
+import { triggerEvent, isEventHappening } from "./effectController.js";
 
 const app = express();
 const API_KEY = process.env.PAUHANA_API_KEY;
@@ -31,7 +31,7 @@ app.post("/storm", async (req, res) => {
   if (req.headers["x-api-key"] !== API_KEY) {
     return res.status(403).json({ ok: false });
   }
-  
+
   if (isEventHappening()) {
     return res.status(409).json({
       ok: false,
@@ -40,7 +40,7 @@ app.post("/storm", async (req, res) => {
   }
 
   // Fire-and-forget (don’t block HTTP)
-  summonStorm();
+  triggerEvent("STORM");
 
   res.json({
     ok: true,
@@ -53,7 +53,7 @@ app.post("/erupt", async (req, res) => {
   if (req.headers["x-api-key"] !== API_KEY) {
     return res.status(403).json({ ok: false });
   }
-  
+
   if (isEventHappening()) {
     return res.status(409).json({
       ok: false,
@@ -62,7 +62,7 @@ app.post("/erupt", async (req, res) => {
   }
 
   // Fire-and-forget (don’t block HTTP)
-  startEruption();
+  triggerEvent("ERUPTION");
 
   res.json({
     ok: true,

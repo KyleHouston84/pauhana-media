@@ -1,9 +1,9 @@
 import "./api.js";
 import { onButtonPress } from "./button.js";
-import { summonStorm } from "./stormController.js";
+import { triggerEvent } from "./effectController.js";
 
 onButtonPress(async () => {
-  await summonStorm();
+  await triggerEvent("STORM");
 });
 
 console.log("🍹 Pau Hana Storm System ready");

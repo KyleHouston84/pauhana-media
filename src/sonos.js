@@ -1,4 +1,4 @@
-import 'dotenv/config'; 
+import "dotenv/config";
 import { Sonos } from "sonos";
 import { SONOS_STEPS } from "./common/constants.js";
 
@@ -7,6 +7,7 @@ export const sonos = new Sonos(process.env.SONOS_IP);
 export async function snapshotSonos() {
   const volume = await sonos.getVolume();
   const state = await sonos.getCurrentState();
+  const queue = await sonos.getQueue();
 
   let track = null;
   try {
@@ -16,8 +17,9 @@ export async function snapshotSonos() {
   return {
     volume,
     state,
-    track
-  }
+    track,
+    queue,
+  };
 }
 
 export async function fadeVolume(from, to, duraionMs) {
@@ -28,6 +30,6 @@ export async function fadeVolume(from, to, duraionMs) {
   for (let index = 0; index < SONOS_STEPS; index++) {
     await sonos.setVolume(Math.round(vol));
     vol += delta;
-    await new Promise(r => setTimeout(r, stepTime));
+    await new Promise((r) => setTimeout(r, stepTime));
   }
 }
