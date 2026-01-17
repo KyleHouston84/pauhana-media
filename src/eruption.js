@@ -18,10 +18,11 @@ async function lightningStrike() {
 
 export async function startEruption() {
   const snap = await snapshotSonos();
+  const eventVolume = Math.max(snap.volume, ERUPTION_VOLUME);
 
   await fadeVolume(snap.volume, 1, 3000);
   await sonos.play("http://pauhana-pi.local:9001/audio/eruption.mp3");
-  await fadeVolume(1, ERUPTION_VOLUME, 1500);
+  await fadeVolume(1, eventVolume, 1500);
 
   // await lightningStrike();
   // await sleep(3000);
@@ -35,5 +36,5 @@ export async function startEruption() {
     await sonos.play();
   }
 
-  await fadeVolume(ERUPTION_VOLUME, snap.volume, 5000);
+  await fadeVolume(eventVolume, snap.volume, 5000);
 }
