@@ -9,10 +9,12 @@ export const EVENT_TYPES = {
     startLog: "🌩️ Storm summoned",
     errorLog: "Storm error",
     endLog: "🌴 Storm ended",
+    uri: "http://pauhana-pi.local:9001/audio/thunderstorm.mp3",
   },
   ERUPTION: {
     startLog: "🌋 The volcano is erupting!",
     errorLog: "Eruption error",
     endLog: "🌴 Eruption ended",
+    uri: "http://pauhana-pi.local:9001/audio/eruption.mp3",
   },
 };

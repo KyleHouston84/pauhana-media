@@ -33,3 +33,9 @@ export async function fadeVolume(from, to, duraionMs) {
     await new Promise((r) => setTimeout(r, stepTime));
   }
 }
+
+export async function playEffect(uri, snap, eventVolume) {
+  await fadeVolume(snap.volume, 1, 3000);
+  await sonos.play(uri);
+  await fadeVolume(1, eventVolume, 1500);
+}

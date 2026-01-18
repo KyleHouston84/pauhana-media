@@ -1,6 +1,6 @@
 import { setLights } from "./hue.js";
-import { sonos, snapshotSonos, fadeVolume } from "./sonos.js";
-import { STORM_VOLUME } from "./common/constants.js";
+import { sonos, snapshotSonos, fadeVolume, playEffect } from "./sonos.js";
+import { STORM_VOLUME, EVENT_TYPES } from "./common/constants.js";
 import { sleep } from "./common/helpers.js";
 
 const ALL_LIGHTS = [1, 2, 3, 4];
@@ -19,10 +19,9 @@ async function lightningStrike() {
 export async function summonStorm() {
   const snap = await snapshotSonos();
   const eventVolume = Math.max(snap.volume, STORM_VOLUME);
+  const { uri } = EVENT_TYPES.STORM;
 
-  await fadeVolume(snap.volume, 1, 3000);
-  await sonos.play("http://pauhana-pi.local:9001/audio/thunderstorm.mp3");
-  await fadeVolume(1, eventVolume, 1500);
+  await playEffect(uri, snap, eventVolume);
 
   // await lightningStrike();
   // await sleep(3000);
