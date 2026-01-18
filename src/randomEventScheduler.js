@@ -1,7 +1,7 @@
 import {
   MAX_EVENT_INTERVAL_MINUTES,
   MIN_EVENT_INTERVAL_MINUTES,
-  EVENT_TYPES,
+  EVENTS,
 } from "./common/constants.js";
 import { snapshotSonos } from "./sonos.js";
 import { triggerEvent } from "./effectController.js";
@@ -18,7 +18,7 @@ export function scheduleRandomEvent() {
     try {
       const snap = await snapshotSonos();
       if (snap.state === "playing") {
-        const eventTypeArr = Object.keys(EVENT_TYPES);
+        const eventTypeArr = Object.keys(EVENTS);
         const randomEventType =
           eventTypeArr[Math.floor(Math.random() * eventTypeArr.length)];
         console.log(`Bar is active — triggering ${randomEventType} 🌩️`);

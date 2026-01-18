@@ -4,7 +4,7 @@ export const ERUPTION_VOLUME = 15;
 export const MIN_EVENT_INTERVAL_MINUTES = 30;
 export const MAX_EVENT_INTERVAL_MINUTES = 90;
 
-export const EVENT_TYPES = {
+export const EVENTS = {
   STORM: {
     startLog: "🌩️ Storm summoned",
     errorLog: "Storm error",

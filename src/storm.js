@@ -1,6 +1,6 @@
 import { setLights } from "./hue.js";
 import { sonos, snapshotSonos, fadeVolume, playEffect } from "./sonos.js";
-import { STORM_VOLUME, EVENT_TYPES } from "./common/constants.js";
+import { STORM_VOLUME, EVENTS } from "./common/constants.js";
 import { sleep } from "./common/helpers.js";
 
 const ALL_LIGHTS = [1, 2, 3, 4];
@@ -19,7 +19,7 @@ async function lightningStrike() {
 export async function summonStorm() {
   const snap = await snapshotSonos();
   const eventVolume = Math.max(snap.volume, STORM_VOLUME);
-  const { uri } = EVENT_TYPES.STORM;
+  const { uri } = EVENTS.STORM;
 
   await playEffect(uri, snap, eventVolume);
 
@@ -27,7 +27,8 @@ export async function summonStorm() {
   // await sleep(3000);
   // await lightningStrike();
 
-  await sleep(60000);
+  // await sleep(60000);
+  await sleep(10000);
   if (snap.track?.uri) {
     await sonos.selectTrack(snap.track.queuePosition);
     await sonos.seek(snap.track.position);

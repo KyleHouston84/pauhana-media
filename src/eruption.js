@@ -1,6 +1,6 @@
 import { setLights } from "./hue.js";
 import { sonos, snapshotSonos, fadeVolume, playEffect } from "./sonos.js";
-import { ERUPTION_VOLUME, EVENT_TYPES } from "./common/constants.js";
+import { ERUPTION_VOLUME, EVENTS } from "./common/constants.js";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ALL_LIGHTS = [1, 2, 3, 4];
@@ -19,7 +19,7 @@ async function lightningStrike() {
 export async function startEruption() {
   const snap = await snapshotSonos();
   const eventVolume = Math.max(snap.volume, ERUPTION_VOLUME);
-  const { uri } = EVENT_TYPES.ERUPTION;
+  const { uri } = EVENTS.ERUPTION;
 
   await playEffect(uri, snap, eventVolume);
 
@@ -27,7 +27,8 @@ export async function startEruption() {
   // await sleep(3000);
   // await lightningStrike();
 
-  await sleep(60000);
+  await sleep(10000);
+  // await sleep(86000);
   if (snap.track?.uri) {
     await sonos.selectTrack(snap.track.queuePosition);
     await sonos.seek(snap.track.position);
@@ -35,5 +36,5 @@ export async function startEruption() {
     await sonos.play();
   }
 
-  await fadeVolume(eventVolume, snap.volume, 5000);
+  await fadeVolume(eventVolume, snap.volume, 3000);
 }

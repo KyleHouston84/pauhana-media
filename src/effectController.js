@@ -1,12 +1,11 @@
 import { summonStorm } from "./storm.js";
 import { startEruption } from "./eruption.js";
-import { EVENT_TYPES } from "./common/constants.js";
+import { EVENTS } from "./common/constants.js";
 
 let eventHappening = false;
 
 /**
  * Triggers an event
- * @class Sonos
  * @param {type} "STORM" | "ERUPTION"
  * @returns Void
  */
@@ -17,7 +16,7 @@ export async function triggerEvent(type) {
   }
 
   eventHappening = true;
-  console.log(`${EVENT_TYPES[type].startLog}`);
+  console.log(`${EVENTS[type].startLog}`);
 
   try {
     switch (type) {
@@ -32,10 +31,10 @@ export async function triggerEvent(type) {
         break;
     }
   } catch (err) {
-    console.error(`${EVENT_TYPES[type].errorLog}:`, err);
+    console.error(`${EVENTS[type].errorLog}:`, err);
   } finally {
     eventHappening = false;
-    console.log(`${EVENT_TYPES[type].endLog}`);
+    console.log(`${EVENTS[type].endLog}`);
   }
 }
 
