@@ -27,8 +27,8 @@ export async function summonStorm() {
   // await sleep(3000);
   // await lightningStrike();
 
-  // await sleep(60000);
-  await sleep(10000);
+  await sleep(60000);
+  // await sleep(10000);
   if (snap.track?.uri) {
     await sonos.selectTrack(snap.track.queuePosition);
     await sonos.seek(snap.track.position);
