@@ -1,9 +1,31 @@
 import "dotenv/config";
-import { Sonos } from "sonos";
+import { Sonos, AsyncDeviceDiscovery } from "sonos";
 import { SONOS_STEPS } from "./common/constants.js";
 
 export const sonos = new Sonos(process.env.SONOS_MAIN_IP);
 export const sonos2 = new Sonos(process.env.SONOS_SECONDARY_IP);
+const discover = new AsyncDeviceDiscovery();
+
+// discover.discoverMultiple({ timeout: 5000 }).then((devices) => {
+//   console.log("Found %d sonos devices", devices.length);
+//   devices.forEach((device) => {
+//     console.log("Device found: ", device.host);
+//   });
+// });
+
+// discover
+//   .discover()
+//   .then((device, model) => {
+//     console.log("Found one sonos device %s getting all groups", device.host);
+//     return device.getAllGroups().then((groups) => {
+//       groups.forEach((group) =>
+//         console.log("Device found: ", group.Name, group.host)
+//       );
+//     });
+//   })
+//   .catch((e) => {
+//     console.warn(" Error in discovery %j", e);
+//   });
 
 export async function snapshotSonos() {
   const volume = await sonos.getVolume();

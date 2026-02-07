@@ -1,6 +1,7 @@
 import { summonStorm } from "./storm.js";
 import { startEruption } from "./eruption.js";
 import { EVENTS } from "./common/constants.js";
+import { pauhanaWLED } from "./wled.js";
 
 let eventHappening = false;
 
@@ -14,6 +15,7 @@ export async function triggerEvent(type) {
     console.log("⚠ An event is already active");
     return false;
   }
+  await pauhanaWLED.discover();
 
   eventHappening = true;
   console.log(`${EVENTS[type].startLog}`);

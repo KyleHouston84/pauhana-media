@@ -1,8 +1,9 @@
 import { setLights } from "./hue.js";
 import { sonos, snapshotSonos, fadeVolume, playEffect } from "./sonos.js";
 import { ERUPTION_VOLUME, EVENTS } from "./common/constants.js";
+import { sleep } from "./common/helpers.js";
+import { pauhanaWLED } from "./wled.js";
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ALL_LIGHTS = [1, 2, 3, 4];
 
 async function lightningStrike() {
@@ -17,12 +18,15 @@ async function lightningStrike() {
 }
 
 export async function startEruption() {
+  pauhanaWLED.assignZones({ volcano: ["WLED-Gledopto"] });
+
   const snap = await snapshotSonos();
   const eventVolume = Math.max(snap.volume, ERUPTION_VOLUME);
-  const { uri } = EVENTS.ERUPTION;
 
+  const { uri } = EVENTS.ERUPTION;
   await playEffect(uri, snap, eventVolume);
 
+  pauhanaWLED.volcanoGlow();
   // await lightningStrike();
   // await sleep(3000);
   // await lightningStrike();
@@ -32,9 +36,9 @@ export async function startEruption() {
   if (snap.track?.uri) {
     await sonos.selectTrack(snap.track.queuePosition);
     await sonos.seek(snap.track.position);
-  } else {
-    await sonos.play();
   }
 
+  await pauhanaWLED.reset();
+  await sonos.play();
   await fadeVolume(eventVolume, snap.volume, 3000);
 }

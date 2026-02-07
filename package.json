@@ -11,10 +11,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.13.4",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "node-fetch": "^3.3.2",
     "onoff": "^6.0.3",
+    "p-map": "^7.0.4",
     "sonos": "^1.14.2"
   },
   "devDependencies": {
