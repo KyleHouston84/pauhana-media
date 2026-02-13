@@ -29,6 +29,7 @@ export async function snapshotSonos(): Promise<SonosSnapshot> {
       artist: track.artist,
       title: track.title,
       album: track.album,
+      albumArtURI: track.albumArtURI,
     } : null,
     queue,
   };

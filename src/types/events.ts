@@ -17,6 +17,7 @@ export interface SonosSnapshot {
     artist?: string;
     title?: string;
     album?: string;
+    albumArtURI?: string;
   } | null;
   queue: any[];
 }

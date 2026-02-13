@@ -12,14 +12,15 @@ app.use(express.json());
 
 // Custom middleware function to check headers
 app.use((req: Request, res: Response, next: NextFunction): void => {
-  // Check if we should protect the requested endpoint
-  const isSafe = req.path.includes("/audio") || req.path.includes("/health");
-  if (!isSafe && req.headers["x-api-key"] !== API_KEY) {
+  // Only check API key for protected API routes
+  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs");
+
+  if (isProtectedRoute && req.headers["x-api-key"] !== API_KEY) {
     res.status(403).json({ ok: false });
     return;
   }
 
-  // If headers are valid, and not a protected endpoint proceed to the next middleware or route handler
+  // Allow all other routes (health, audio, dashboard)
   next();
 });
 
@@ -27,16 +28,30 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve audio file
+// Serve audio files
 const AUDIO_DIR = path.join(__dirname, "../audio");
 console.log("Serving audio from:", AUDIO_DIR);
-
 app.use("/audio", express.static(AUDIO_DIR));
+
+// Serve React dashboard (production)
+const WEB_DIR = path.join(__dirname, "../web-dist");
+app.use(express.static(WEB_DIR));
 
 // Health check
 app.get("/health", async (_req: Request, res: Response) => {
   const stormActive = isEventHappening();
   const snap = await snapshotSonos();
+
+  // Construct full album art URL from Sonos
+  let albumArtURL = null;
+  if (snap.track?.albumArtURI) {
+    // If it's a relative URL, prepend the Sonos speaker IP
+    if (snap.track.albumArtURI.startsWith('/')) {
+      albumArtURL = `http://${config.sonos.mainIp}:1400${snap.track.albumArtURI}`;
+    } else {
+      albumArtURL = snap.track.albumArtURI;
+    }
+  }
 
   res.json({
     status: "ok",
@@ -48,6 +63,7 @@ app.get("/health", async (_req: Request, res: Response) => {
         artist: snap.track.artist,
         title: snap.track.title,
         album: snap.track.album,
+        albumArtURI: albumArtURL,
       } : null,
     },
   });
