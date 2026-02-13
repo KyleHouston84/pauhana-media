@@ -1,8 +1,18 @@
 import axios from "axios";
 import { discoverWLED } from "./utils/discoverWLED.js";
 import { LIGHTING, RED } from "./json/wledStates.js";
+import type { WLEDDevice, WLEDState, WLEDZoneType, WLEDZones } from "./types/wled.js";
+
+interface WLEDSnapshotEntry {
+  device: WLEDDevice;
+  state: WLEDState;
+}
 
 export class PauHanaWLED {
+  devices: WLEDDevice[];
+  zones: WLEDZones;
+  snapshot: Record<string, WLEDSnapshotEntry>;
+
   constructor() {
     this.devices = []; // all discovered devices
     this.zones = {
@@ -14,27 +24,27 @@ export class PauHanaWLED {
     console.log("💡 WLED system ready");
   }
 
-  async discover() {
+  async discover(): Promise<WLEDDevice[]> {
     this.devices = await discoverWLED();
     return this.devices;
   }
 
   // Assign devices to zones by name (or manually)
-  assignZones(zoneMapping = {}) {
+  assignZones(zoneMapping: Record<string, string[]> = {}): void {
     // Reset zones
-    Object.keys(this.zones).forEach((zone) => (this.zones[zone] = []));
+    Object.keys(this.zones).forEach((zone) => (this.zones[zone as WLEDZoneType] = []));
 
     this.devices.forEach((device) => {
       for (const [zone, names] of Object.entries(zoneMapping)) {
         if (names.includes(device.name)) {
-          this.zones[zone].push(device);
+          this.zones[zone as WLEDZoneType].push(device);
         }
       }
     });
   }
 
   // Send command to a single WLED device
-  async sendCommand(device, command) {
+  async sendCommand(device: WLEDDevice, command: string): Promise<void> {
     try {
       await axios.get(`http://${device.ip}/win&T=${command}`, { timeout: 500 });
     } catch (e) {
@@ -43,18 +53,18 @@ export class PauHanaWLED {
   }
 
   // Send json command to a single WLED device
-  async sendJSON(device, json) {
+  async sendJSON(device: WLEDDevice, json: WLEDState): Promise<void> {
     try {
-      const res = await axios.post(`http://${device.ip}/json/state`, json);
+      await axios.post<WLEDState>(`http://${device.ip}/json/state`, json);
     } catch (error) {
       console.error("Failed to send JSON", error);
     }
   }
 
-  async saveSnapshot() {
+  async saveSnapshot(): Promise<boolean> {
     for (const device of this.devices) {
       try {
-        const res = await axios.get(`http://${device.ip}/json/state`, {
+        const res = await axios.get<WLEDState>(`http://${device.ip}/json/state`, {
           timeout: 200,
         });
         if (res.data) {
@@ -68,7 +78,7 @@ export class PauHanaWLED {
   }
 
   // Trigger storm effect on all storm devices
-  async triggerStorm() {
+  async triggerStorm(): Promise<void> {
     await this.saveSnapshot();
     for (const device of this.zones.storm) {
       await this.sendJSON(device, LIGHTING);
@@ -77,7 +87,7 @@ export class PauHanaWLED {
   }
 
   // Trigger volcano glow
-  async volcanoGlow() {
+  async volcanoGlow(): Promise<void> {
     await this.saveSnapshot();
     for (const device of this.zones.volcano) {
       await this.sendJSON(device, RED);
@@ -86,7 +96,7 @@ export class PauHanaWLED {
   }
 
   // Reset to snapshot state
-  async reset() {
+  async reset(): Promise<void> {
     for (const snap in this.snapshot) {
       const { device, state } = this.snapshot[snap];
       await this.sendJSON(device, state);

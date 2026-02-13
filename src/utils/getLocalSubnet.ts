@@ -1,10 +1,13 @@
 import os from "os";
 
 // Get the local subnet
-export function getLocalSubnet() {
+export function getLocalSubnet(): string {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]) {
+    const ifaceList = interfaces[name];
+    if (!ifaceList) continue;
+
+    for (const iface of ifaceList) {
       // IPv4, not internal
       if (iface.family === "IPv4" && !iface.internal) {
         const ipParts = iface.address.split(".");

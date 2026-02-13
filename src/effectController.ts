@@ -2,15 +2,16 @@ import { summonStorm } from "./storm.js";
 import { startEruption } from "./eruption.js";
 import { EVENTS } from "./common/constants.js";
 import { pauhanaWLED } from "./wled.js";
+import type { EventType } from "./types/events.js";
 
 let eventHappening = false;
 
 /**
  * Triggers an event
- * @param {type} "STORM" | "ERUPTION"
- * @returns Void
+ * @param type "STORM" | "ERUPTION"
+ * @returns boolean indicating whether the event was triggered
  */
-export async function triggerEvent(type) {
+export async function triggerEvent(type: EventType): Promise<boolean> {
   if (eventHappening) {
     console.log("⚠ An event is already active");
     return false;
@@ -38,8 +39,9 @@ export async function triggerEvent(type) {
     eventHappening = false;
     console.log(`${EVENTS[type].endLog}`);
   }
+  return true;
 }
 
-export function isEventHappening() {
+export function isEventHappening(): boolean {
   return eventHappening;
 }

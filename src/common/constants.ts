@@ -1,10 +1,19 @@
+import type { EventType } from '../types/events.js';
+
 export const SONOS_STEPS = 20;
 export const STORM_VOLUME = 10;
 export const ERUPTION_VOLUME = 15;
 export const MIN_EVENT_INTERVAL_MINUTES = 30;
 export const MAX_EVENT_INTERVAL_MINUTES = 90;
 
-export const EVENTS = {
+interface EventDetails {
+  startLog: string;
+  errorLog: string;
+  endLog: string;
+  uri: string;
+}
+
+export const EVENTS: Record<EventType, EventDetails> = {
   STORM: {
     startLog: "🌩️ Storm summoned",
     errorLog: "Storm error",

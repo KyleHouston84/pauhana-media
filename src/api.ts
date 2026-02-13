@@ -1,21 +1,22 @@
-import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { triggerEvent, isEventHappening } from "./effectController.js";
 import { getLogs } from "./logs.js";
 import { snapshotSonos } from "./sonos.js";
+import { config } from "./config.js";
 
 const app = express();
-const API_KEY = process.env.API_KEY;
+const API_KEY = config.apiKey;
 app.use(express.json());
 
 // Custom middleware function to check headers
-app.use((req, res, next) => {
-  // Check is we should protect the requested endpoint
+app.use((req: Request, res: Response, next: NextFunction): void => {
+  // Check if we should protect the requested endpoint
   const isSafe = req.path.includes("/audio") || req.path.includes("/health");
   if (!isSafe && req.headers["x-api-key"] !== API_KEY) {
-    return res.status(403).json({ ok: false });
+    res.status(403).json({ ok: false });
+    return;
   }
 
   // If headers are valid, and not a protected endpoint proceed to the next middleware or route handler
@@ -33,7 +34,7 @@ console.log("Serving audio from:", AUDIO_DIR);
 app.use("/audio", express.static(AUDIO_DIR));
 
 // Health check
-app.get("/health", async (req, res) => {
+app.get("/health", async (_req: Request, res: Response) => {
   const stormActive = isEventHappening();
   const snap = await snapshotSonos();
 
@@ -43,25 +44,26 @@ app.get("/health", async (req, res) => {
     sonos: {
       state: snap.state,
       volume: snap.volume,
-      track: {
+      track: snap.track ? {
         artist: snap.track.artist,
         title: snap.track.title,
         album: snap.track.album,
-      },
+      } : null,
     },
   });
 });
 
 // Trigger storm
-app.post("/storm", async (req, res) => {
+app.post("/storm", async (_req: Request, res: Response): Promise<void> => {
   if (isEventHappening()) {
-    return res.status(409).json({
+    res.status(409).json({
       ok: false,
       message: "An event is already active",
     });
+    return;
   }
 
-  // Fire-and-forget (don’t block HTTP)
+  // Fire-and-forget (don't block HTTP)
   triggerEvent("STORM");
 
   res.json({
@@ -71,15 +73,16 @@ app.post("/storm", async (req, res) => {
 });
 
 // Trigger eruption
-app.post("/erupt", async (req, res) => {
+app.post("/erupt", async (_req: Request, res: Response): Promise<void> => {
   if (isEventHappening()) {
-    return res.status(409).json({
+    res.status(409).json({
       ok: false,
       message: "An event is already active",
     });
+    return;
   }
 
-  // Fire-and-forget (don’t block HTTP)
+  // Fire-and-forget (don't block HTTP)
   triggerEvent("ERUPTION");
 
   res.json({
@@ -88,7 +91,7 @@ app.post("/erupt", async (req, res) => {
   });
 });
 
-app.get("/logs", async (req, res) => {
+app.get("/logs", async (req: Request, res: Response) => {
   try {
     const lines = Math.min(Number(req.query.lines) || 100, 500);
     const logs = await getLogs(lines);

@@ -1,4 +1,64 @@
-export const RED = {
+interface WLEDSegment {
+  id: number;
+  start: number;
+  stop: number;
+  len: number;
+  grp: number;
+  spc: number;
+  of: number;
+  on: boolean;
+  frz: boolean;
+  bri: number;
+  cct: number;
+  set: number;
+  n: string;
+  col: number[][];
+  fx: number;
+  sx: number;
+  ix: number;
+  pal: number;
+  c1: number;
+  c2: number;
+  c3: number;
+  sel: boolean;
+  rev: boolean;
+  mi: boolean;
+  o1: boolean;
+  o2: boolean;
+  o3: boolean;
+  si: number;
+  m12: number;
+}
+
+interface WLEDFullState {
+  on: boolean;
+  bri: number;
+  transition: number;
+  ps: number;
+  pl: number;
+  ledmap: number;
+  AudioReactive: {
+    on: boolean;
+  };
+  nl: {
+    on: boolean;
+    dur: number;
+    mode: number;
+    tbri: number;
+    rem: number;
+  };
+  udpn: {
+    send: boolean;
+    recv: boolean;
+    sgrp: number;
+    rgrp: number;
+  };
+  lor: number;
+  mainseg: number;
+  seg: WLEDSegment[];
+}
+
+export const RED: WLEDFullState = {
   on: true,
   bri: 255,
   transition: 7,
@@ -97,7 +157,7 @@ export const RED = {
   ],
 };
 
-export const LIGHTING = {
+export const LIGHTING: WLEDFullState = {
   on: true,
   bri: 255,
   transition: 7,
