@@ -9,7 +9,9 @@
     "build": "tsc",
     "start": "node dist/main.js",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "./deploy.sh",
+    "deploy:quick": "./quick-deploy.sh"
   },
   "keywords": [],
   "author": "",
