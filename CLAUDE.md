@@ -28,10 +28,91 @@ npm run dev:web
 # Type check without building
 npm run typecheck
 
+# Testing
+npm test               # Run tests in watch mode
+npm run test:run       # Run tests once and exit
+npm run test:ui        # Run tests with browser UI
+npm run test:coverage  # Generate coverage report
+
 # Deploy to Raspberry Pi (automated)
 npm run deploy         # Full deployment with deps install
 npm run deploy:quick   # Quick sync (no npm install)
 ```
+
+## Testing
+
+The project uses **Vitest** for fast, modern testing with TypeScript support.
+
+### Running Tests
+
+```bash
+# Watch mode - tests re-run on file changes (development)
+npm test
+
+# Run once and exit (CI/CD)
+npm run test:run
+
+# Open web UI to visualize test results
+npm run test:ui
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+Tests live next to the source files they test:
+- `src/effectController.ts` → `src/effectController.test.ts`
+- `src/utils/helper.ts` → `src/utils/helper.test.ts`
+
+### Test Categories
+
+**Unit Tests** (fast, always run):
+- Input validation and error handling
+- Pure logic functions
+- Constants and data structure validation
+- Located: `src/**/*.test.ts`
+
+**Integration Tests** (slow, skipped by default):
+- Hardware-dependent tests (GPIO, Sonos, WLED)
+- Marked with `describe.skip()`
+- Run manually when needed on the Pi
+
+### Automated Testing
+
+**Pre-commit Hook** (via Husky):
+- Tests run automatically before every `git commit`
+- Commit is blocked if tests fail
+- Ensures broken code never enters git history
+
+**Pre-deployment**:
+- `deploy.sh` runs tests before deploying
+- Deployment is blocked if tests fail
+- Prevents deploying broken code to production
+
+### Writing Tests
+
+Follow the **Arrange-Act-Assert** pattern:
+
+```typescript
+it('should return false for invalid event types', async () => {
+  // Arrange: Set up test data
+  const invalidType = 'INVALID_EVENT';
+
+  // Act: Execute the function
+  const result = await triggerEvent(invalidType);
+
+  // Assert: Verify the outcome
+  expect(result).toBe(false);
+});
+```
+
+**Best Practices:**
+- Test behavior, not implementation
+- Use descriptive test names
+- Keep tests fast (< 10ms for unit tests)
+- Mock hardware dependencies for unit tests
+- Skip integration tests by default
 
 ## Deployment
 
