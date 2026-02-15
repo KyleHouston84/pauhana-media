@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run tests before committing
+echo "🧪 Running tests before commit..."
+npm run test:run
+
+# If tests fail, prevent the commit
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed! Fix them before committing."
+  exit 1
+fi
+
+echo "✅ Tests passed! Proceeding with commit..."

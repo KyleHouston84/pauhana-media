@@ -17,6 +17,13 @@ export async function triggerEvent(type: EventType): Promise<boolean> {
     console.log("⚠ An event is already active");
     return false;
   }
+
+  // Validate event type exists
+  if (!EVENTS[type]) {
+    console.log(`🚨 Unknown event type: ${type}`);
+    return false;
+  }
+
   await pauhanaWLED.discover();
 
   eventHappening = true;

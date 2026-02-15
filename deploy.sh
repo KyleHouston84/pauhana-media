@@ -21,7 +21,16 @@ echo "================================================"
 echo "Target: ${PI_USER}@${PI_HOST}"
 echo ""
 
-# Step 1: Build TypeScript locally
+# Step 1: Run tests
+echo -e "${YELLOW}🧪 Running tests...${NC}"
+if ! npm run test:run; then
+    echo -e "${RED}❌ Tests failed! Fix them before deploying.${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Tests passed${NC}"
+echo ""
+
+# Step 2: Build TypeScript locally
 echo -e "${YELLOW}📦 Building TypeScript...${NC}"
 npm run build
 echo -e "${GREEN}✅ Build complete${NC}"

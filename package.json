@@ -5,7 +5,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest --coverage",
     "build": "tsc && npm run build:web",
     "build:web": "cd web && npm run build",
     "start": "node dist/main.js",
@@ -13,7 +16,8 @@
     "dev:web": "cd web && npm run dev",
     "typecheck": "tsc --noEmit",
     "deploy": "./deploy.sh",
-    "deploy:quick": "./quick-deploy.sh"
+    "deploy:quick": "./quick-deploy.sh",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +36,9 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.8",
-    "typescript": "^5.9.3"
+    "@vitest/ui": "^4.0.18",
+    "husky": "^9.1.7",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }
