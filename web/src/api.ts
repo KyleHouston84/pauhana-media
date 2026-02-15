@@ -1,6 +1,9 @@
 // API client for Pau Hana Media backend
 
-const API_BASE = import.meta.env.DEV ? 'http://localhost:9001' : '';
+// Use empty string (relative URLs) in both dev and production
+// In dev: Vite proxy forwards to localhost:9001
+// In production: Same origin, served by Express
+const API_BASE = '';
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 interface HealthResponse {

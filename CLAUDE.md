@@ -36,13 +36,15 @@ npm run deploy:quick   # Quick sync (no npm install)
 ## Deployment
 
 The project includes automated deployment scripts:
+
 - **deploy.sh**: Full deployment (build, sync, install deps, restart service)
 - **quick-deploy.sh**: Quick deployment (build, sync, restart only)
 
 Deploys to: `kyle@pauhana-pi.local:/home/kyle/pauhana-media`
 
 The app runs as a systemd service (`pauhana.service`) and is accessible at:
-- **http://pauhana.tiki** (via nginx reverse proxy on port 80)
+
+- **http://pauhana.io** (via nginx reverse proxy on port 80)
 - http://pauhana-pi.local:9001 (direct access)
 
 nginx is configured to proxy requests from port 80 to the Node.js app on port 9001.
@@ -71,6 +73,7 @@ pauhana-media/
 ```
 
 ### Entry Point Flow
+
 - `src/main.ts` initializes all systems:
   1. Validates environment variables (via `config.ts`)
   2. Starts Express API server (via `api.ts`)
@@ -79,13 +82,16 @@ pauhana-media/
   5. Starts random event scheduler
 
 ### Event System
+
 Events are coordinated through `effectController.ts` which:
+
 - Prevents overlapping events (uses `eventHappening` flag)
 - Triggers event-specific functions (`summonStorm()`, `startEruption()`)
 - Discovers WLED devices before each event
 - Handles errors and cleanup via try/finally
 
 Event implementations (`storm.ts`, `eruption.ts`) follow this pattern:
+
 1. Assign WLED devices to zones (storm/volcano)
 2. Snapshot current Sonos state (volume, track, position, queue)
 3. Fade volume down to 1
@@ -97,6 +103,7 @@ Event implementations (`storm.ts`, `eruption.ts`) follow this pattern:
 ### Hardware Controllers
 
 **Sonos** (`sonos.ts`):
+
 - Controls two Sonos speakers (main + secondary)
 - `snapshotSonos()`: Captures volume, playback state, current track position/queue (including album art)
 - `fadeVolume()`: Smooth volume transitions in steps (defined by `SONOS_STEPS`)
@@ -104,6 +111,7 @@ Event implementations (`storm.ts`, `eruption.ts`) follow this pattern:
 - Returns typed `SonosSnapshot` interface with nullable track info
 
 **WLED** (`wled.ts`):
+
 - `PauHanaWLED` class manages multiple WLED devices with generic typing
 - `discover()`: Network scan via HTTP to find all WLED controllers on subnet
 - `assignZones()`: Maps devices to zones (volcano, storm, ambient) by name
@@ -112,10 +120,12 @@ Event implementations (`storm.ts`, `eruption.ts`) follow this pattern:
 - Zone-based control allows different devices for different effects
 
 **Philips Hue** (`hue.ts`):
+
 - Direct HTTP control of bridge
 - Used for lightning flash effects (currently commented out in storm/eruption)
 
 **GPIO Button** (`button.ts`):
+
 - Uses `onoff` library to monitor GPIO 516
 - Platform-aware: only initializes on Linux (gracefully skips on macOS)
 - Debounced button press triggers storm event
@@ -125,11 +135,13 @@ Event implementations (`storm.ts`, `eruption.ts`) follow this pattern:
 Protected endpoints require `X-API-Key` header (checked by middleware). Public endpoints include dashboard, health check, and audio files.
 
 **Public Endpoints:**
+
 - `GET /` - Serves React dashboard (static files from web-dist/)
 - `GET /health` - Returns system status, storm state, and current Sonos info with album art
 - `GET /audio/*` - Serves static audio files
 
 **Protected Endpoints (require X-API-Key header):**
+
 - `POST /storm` - Triggers storm event (409 if event already active)
 - `POST /erupt` - Triggers volcano eruption (409 if event already active)
 - `GET /logs?lines=N` - Returns last N lines of logs (max 500)
@@ -139,18 +151,21 @@ Protected endpoints require `X-API-Key` header (checked by middleware). Public e
 Located in `web/` directory, built with React + TypeScript + Vite.
 
 **Features:**
+
 - Real-time system status (polls `/health` every 5 seconds)
 - Live Sonos playback info with album artwork
 - Event trigger buttons (Storm, Eruption)
 - Tiki bar themed styling
 
 **Development:**
+
 ```bash
 cd web
 npm run dev    # Starts Vite dev server on port 5173 with proxy
 ```
 
 **Production Build:**
+
 ```bash
 npm run build:web   # Builds to ../web-dist/
 ```
@@ -160,6 +175,7 @@ The Express server serves the built React app from `web-dist/` at the root path.
 ### Random Event Scheduler
 
 `randomEventScheduler.ts` creates a recursive random delay loop:
+
 - Waits 30-90 minutes (configurable in `constants.ts`)
 - Checks if Sonos is playing music
 - If playing, randomly picks STORM or ERUPTION
@@ -168,6 +184,7 @@ The Express server serves the built React app from `web-dist/` at the root path.
 ### Network Discovery
 
 `utils/discoverWLED.ts` performs subnet scanning:
+
 - Gets local subnet from network interfaces (`getLocalSubnet.ts`)
 - Scans all 254 IPs concurrently (50 at a time via `p-map`)
 - Identifies WLED devices by checking for `/json` endpoint with version field
@@ -178,6 +195,7 @@ The Express server serves the built React app from `web-dist/` at the root path.
 ### Environment Variables
 
 Create a `.env` file in the project root:
+
 ```
 API_KEY=your-api-key-here
 SONOS_MAIN_IP=192.168.1.x
@@ -191,6 +209,7 @@ Environment variables are validated at startup by `src/config.ts`. Missing requi
 ### React Dashboard Environment
 
 Create `web/.env` for the dashboard:
+
 ```
 VITE_API_KEY=your-api-key-here
 ```
@@ -200,12 +219,14 @@ This is only needed for triggering events from the dashboard (storm/eruption but
 ### Constants
 
 Constants in `src/common/constants.ts`:
+
 - `STORM_VOLUME`, `ERUPTION_VOLUME`: Target volumes for events
 - `MIN_EVENT_INTERVAL_MINUTES`, `MAX_EVENT_INTERVAL_MINUTES`: Random event timing
 - `SONOS_STEPS`: Number of steps for volume fade smoothness
 - `EVENTS`: Event definitions with URIs, logging messages
 
 Audio files: Place MP3 files in `audio/` directory. Currently expects:
+
 - `thunderstorm.mp3`
 - `eruption.mp3`
 

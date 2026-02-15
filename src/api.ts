@@ -1,6 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { triggerEvent, isEventHappening } from "./effectController.js";
 import { getLogs } from "./logs.js";
 import { snapshotSonos } from "./sonos.js";
@@ -8,6 +9,16 @@ import { config } from "./config.js";
 
 const app = express();
 const API_KEY = config.apiKey;
+
+// Enable CORS only in development (when accessed from Vite dev server)
+// In production, nginx proxy makes all requests same-origin, so CORS not needed
+if (process.env.NODE_ENV !== 'production') {
+  app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:9001'],
+    credentials: true,
+  }));
+}
+
 app.use(express.json());
 
 // Custom middleware function to check headers
