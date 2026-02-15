@@ -7,6 +7,9 @@ import { snapshotSonos } from "./sonos.js";
 import { triggerEvent } from "./effectController.js";
 import type { EventType } from "./types/events.js";
 
+// Store timeout ID so we can cancel/reset the scheduler
+let scheduledTimeout: NodeJS.Timeout | null = null;
+
 export function scheduleRandomEvent(): void {
   const min = MIN_EVENT_INTERVAL_MINUTES * 60 * 1000;
   const max = MAX_EVENT_INTERVAL_MINUTES * 60 * 1000;
@@ -15,7 +18,7 @@ export function scheduleRandomEvent(): void {
 
   console.log(`Next event check in ${Math.round(delay / 60000)} minutes ⏰`);
 
-  setTimeout(async () => {
+  scheduledTimeout = setTimeout(async () => {
     try {
       const snap = await snapshotSonos();
       if (snap.state === "playing") {
@@ -34,4 +37,17 @@ export function scheduleRandomEvent(): void {
       scheduleRandomEvent();
     }
   }, delay);
+}
+
+/**
+ * Resets the random event scheduler.
+ * Call this after manual event triggers to prevent back-to-back events.
+ */
+export function resetScheduler(): void {
+  if (scheduledTimeout) {
+    clearTimeout(scheduledTimeout);
+    scheduledTimeout = null;
+  }
+  console.log("🔄 Random event scheduler reset");
+  scheduleRandomEvent();
 }

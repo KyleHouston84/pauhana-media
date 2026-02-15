@@ -2,6 +2,7 @@ import { summonStorm } from "./storm.js";
 import { startEruption } from "./eruption.js";
 import { EVENTS } from "./common/constants.js";
 import { pauhanaWLED } from "./wled.js";
+import { resetScheduler } from "./randomEventScheduler.js";
 import type { EventType } from "./types/events.js";
 
 let eventHappening = false;
@@ -38,6 +39,9 @@ export async function triggerEvent(type: EventType): Promise<boolean> {
   } finally {
     eventHappening = false;
     console.log(`${EVENTS[type].endLog}`);
+
+    // Reset random event scheduler to prevent back-to-back events
+    resetScheduler();
   }
   return true;
 }
