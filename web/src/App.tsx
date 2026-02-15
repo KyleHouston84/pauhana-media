@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { getHealth, triggerStorm, triggerEruption } from './api';
-import './App.css';
+import { useState, useEffect } from "react";
+import { getHealth, triggerStorm, triggerEruption } from "./api";
+import "./App.css";
 
 interface HealthData {
   status: string;
@@ -29,7 +29,7 @@ function App() {
       setHealth(data);
       setError(null);
     } catch (err) {
-      setError('Failed to connect to Pau Hana system');
+      setError("Failed to connect to Pau Hana system");
       console.error(err);
     } finally {
       setLoading(false);
@@ -49,7 +49,7 @@ function App() {
       alert(result.message);
       fetchHealth(); // Refresh status
     } catch (err) {
-      alert('Failed to trigger storm. Check API key in .env');
+      alert("Failed to trigger storm. Check API key in .env");
     } finally {
       setTriggering(false);
     }
@@ -62,7 +62,7 @@ function App() {
       alert(result.message);
       fetchHealth(); // Refresh status
     } catch (err) {
-      alert('Failed to trigger eruption. Check API key in .env');
+      alert("Failed to trigger eruption. Check API key in .env");
     } finally {
       setTriggering(false);
     }
@@ -91,7 +91,7 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>🍹 Pau Hana Media</h1>
+        <h1>Pau Hana Lounge</h1>
         <p className="subtitle">Tiki Bar Event Controller</p>
       </header>
 
@@ -102,14 +102,16 @@ function App() {
           <div className="status-grid">
             <div className="status-item">
               <span className="label">Status:</span>
-              <span className={`value ${health?.status === 'ok' ? 'success' : 'error'}`}>
-                {health?.status === 'ok' ? '✅ Online' : '❌ Offline'}
+              <span
+                className={`value ${health?.status === "ok" ? "success" : "error"}`}
+              >
+                {health?.status === "ok" ? "✅ Online" : "❌ Offline"}
               </span>
             </div>
             <div className="status-item">
               <span className="label">Event Active:</span>
-              <span className={`value ${health?.stormActive ? 'warning' : ''}`}>
-                {health?.stormActive ? '⚡ Yes' : '✓ No'}
+              <span className={`value ${health?.stormActive ? "warning" : ""}`}>
+                {health?.stormActive ? "⚡ Yes" : "✓ No"}
               </span>
             </div>
           </div>
@@ -121,14 +123,14 @@ function App() {
           <div className="status-grid">
             <div className="status-item">
               <span className="label">State:</span>
-              <span className="value">{health?.sonos.state || 'unknown'}</span>
+              <span className="value">{health?.sonos.state || "unknown"}</span>
             </div>
             <div className="status-item">
               <span className="label">Volume:</span>
               <span className="value">{health?.sonos.volume}</span>
             </div>
           </div>
-          {health?.sonos.track && (
+          {health?.sonos.track && !health?.stormActive && (
             <div className="now-playing">
               <h3>Now Playing:</h3>
               <div className="track-display">
@@ -140,11 +142,18 @@ function App() {
                   />
                 )}
                 <div className="track-info">
-                  <div><strong>{health.sonos.track.title || 'Unknown'}</strong></div>
-                  <div>{health.sonos.track.artist || 'Unknown Artist'}</div>
-                  <div className="album">{health.sonos.track.album || ''}</div>
+                  <div>
+                    <strong>{health.sonos.track.title || "Unknown"}</strong>
+                  </div>
+                  <div>{health.sonos.track.artist || "Unknown Artist"}</div>
+                  <div className="album">{health.sonos.track.album || ""}</div>
                 </div>
               </div>
+            </div>
+          )}
+          {health?.stormActive && (
+            <div className="warning-message">
+              ⚠️ Event in progress - please wait
             </div>
           )}
         </div>
@@ -180,7 +189,9 @@ function App() {
         {/* Settings Placeholder */}
         <div className="card settings-placeholder">
           <h2>⚙️ Settings</h2>
-          <p className="placeholder-text">Coming soon: Control volume, intervals, and more</p>
+          <p className="placeholder-text">
+            Coming soon: Control volume, intervals, and more
+          </p>
         </div>
       </div>
 
