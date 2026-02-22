@@ -10,6 +10,16 @@ PI_USER="kyle"
 REMOTE_DIR="/home/kyle/pauhana-media"
 VIDEO_FILE="./video/PauHanaVideoLoop.mp4"
 
+# SSH connection multiplexing to avoid multiple password prompts
+SSH_CONTROL_PATH="/tmp/ssh-pauhana-video-deploy-%r@%h:%p"
+SSH_OPTS="-o ControlMaster=auto -o ControlPath=${SSH_CONTROL_PATH} -o ControlPersist=300"
+
+# Cleanup function to close SSH connection
+cleanup() {
+  ssh ${SSH_OPTS} -O exit ${PI_USER}@${PI_HOST} 2>/dev/null || true
+}
+trap cleanup EXIT
+
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -35,7 +45,7 @@ echo ""
 
 # Check Pi connectivity
 echo -e "${YELLOW}🔍 Checking Pi connectivity...${NC}"
-if ! ssh -o ConnectTimeout=5 ${PI_USER}@${PI_HOST} "echo 'Connected'" &>/dev/null; then
+if ! ssh ${SSH_OPTS} -o ConnectTimeout=5 ${PI_USER}@${PI_HOST} "echo 'Connected'" &>/dev/null; then
     echo -e "${RED}❌ Cannot connect to ${PI_HOST}${NC}"
     echo "Please check:"
     echo "  - Pi is powered on and connected to network"
@@ -48,6 +58,7 @@ echo ""
 # Sync video file to Pi
 echo -e "${YELLOW}📤 Syncing new video file (this may take a while depending on size)...${NC}"
 rsync -avz --progress \
+    -e "ssh ${SSH_OPTS}" \
     "$VIDEO_FILE" \
     ${PI_USER}@${PI_HOST}:${REMOTE_DIR}/video/
 
@@ -56,12 +67,12 @@ echo ""
 
 # Restart video service to load new file
 echo -e "${YELLOW}🔄 Restarting video service...${NC}"
-ssh ${PI_USER}@${PI_HOST} "sudo systemctl restart pauhana-video.service"
+ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo systemctl restart pauhana-video.service"
 sleep 2
 
 # Check service status
 echo -e "${YELLOW}✅ Checking service status...${NC}"
-ssh ${PI_USER}@${PI_HOST} "sudo systemctl status pauhana-video.service --no-pager | head -15"
+ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo systemctl status pauhana-video.service --no-pager | head -15"
 echo ""
 
 echo -e "${GREEN}🎉 Video update complete!${NC}"

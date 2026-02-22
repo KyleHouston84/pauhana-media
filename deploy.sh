@@ -10,6 +10,16 @@ PI_USER="kyle"
 REMOTE_DIR="/home/kyle/pauhana-media"
 SERVICE_NAME="pauhana.service"
 
+# SSH connection multiplexing to avoid multiple password prompts
+SSH_CONTROL_PATH="/tmp/ssh-pauhana-deploy-%r@%h:%p"
+SSH_OPTS="-o ControlMaster=auto -o ControlPath=${SSH_CONTROL_PATH} -o ControlPersist=300"
+
+# Cleanup function to close SSH connection
+cleanup() {
+  ssh ${SSH_OPTS} -O exit ${PI_USER}@${PI_HOST} 2>/dev/null || true
+}
+trap cleanup EXIT
+
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -38,7 +48,7 @@ echo ""
 
 # Step 2: Check Pi connectivity
 echo -e "${YELLOW}🔍 Checking Pi connectivity...${NC}"
-if ! ssh -o ConnectTimeout=5 ${PI_USER}@${PI_HOST} "echo 'Connected'" &>/dev/null; then
+if ! ssh ${SSH_OPTS} -o ConnectTimeout=5 ${PI_USER}@${PI_HOST} "echo 'Connected'" &>/dev/null; then
     echo -e "${RED}❌ Cannot connect to ${PI_HOST}${NC}"
     echo "Please check:"
     echo "  - Pi is powered on and connected to network"
@@ -52,6 +62,7 @@ echo ""
 # Step 3: Sync files to Pi
 echo -e "${YELLOW}📤 Syncing files to Pi...${NC}"
 rsync -avz --delete \
+    -e "ssh ${SSH_OPTS}" \
     --exclude 'node_modules' \
     --exclude '.git' \
     --exclude '.env' \
@@ -64,7 +75,7 @@ echo ""
 
 # Step 4: Install dependencies and restart service on Pi
 echo -e "${YELLOW}🔧 Running remote deployment tasks...${NC}"
-ssh ${PI_USER}@${PI_HOST} "bash -s" << 'ENDSSH'
+ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "bash -s" << 'ENDSSH'
 set -e
 cd /home/kyle/pauhana-media
 
@@ -96,6 +107,6 @@ echo ""
 echo -e "${GREEN}🎉 Deployment complete!${NC}"
 echo ""
 echo "Service status on Pi:"
-ssh ${PI_USER}@${PI_HOST} "sudo systemctl status pauhana.service --no-pager | head -5"
+ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo systemctl status pauhana.service --no-pager | head -5"
 echo ""
-echo "View logs: ssh ${PI_USER}@${PI_HOST} 'sudo journalctl -u pauhana.service -f'"
+echo "View logs: ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} 'sudo journalctl -u pauhana.service -f'"

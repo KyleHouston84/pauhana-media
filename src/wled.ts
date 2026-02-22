@@ -1,7 +1,12 @@
 import axios from "axios";
 import { discoverWLED } from "./utils/discoverWLED.js";
 import { LIGHTING, RED } from "./json/wledStates.js";
-import type { WLEDDevice, WLEDState, WLEDZoneType, WLEDZones } from "./types/wled.js";
+import type {
+  WLEDDevice,
+  WLEDState,
+  WLEDZoneType,
+  WLEDZones,
+} from "./types/wled.js";
 
 interface WLEDSnapshotEntry {
   device: WLEDDevice;
@@ -21,18 +26,24 @@ export class PauHanaWLED {
       ambient: [],
     };
     this.snapshot = {}; // snapshot of the current state by ip
-    console.log("💡 WLED system ready");
   }
 
   async discover(): Promise<WLEDDevice[]> {
     this.devices = await discoverWLED();
+    if (this.devices.length > 0) {
+      console.log("Discovered WLEDs:", this.devices);
+    } else {
+      console.log("Unable to locate WLEDs", this.devices);
+    }
     return this.devices;
   }
 
   // Assign devices to zones by name (or manually)
   assignZones(zoneMapping: Record<string, string[]> = {}): void {
     // Reset zones
-    Object.keys(this.zones).forEach((zone) => (this.zones[zone as WLEDZoneType] = []));
+    Object.keys(this.zones).forEach(
+      (zone) => (this.zones[zone as WLEDZoneType] = []),
+    );
 
     this.devices.forEach((device) => {
       for (const [zone, names] of Object.entries(zoneMapping)) {
@@ -64,9 +75,12 @@ export class PauHanaWLED {
   async saveSnapshot(): Promise<boolean> {
     for (const device of this.devices) {
       try {
-        const res = await axios.get<WLEDState>(`http://${device.ip}/json/state`, {
-          timeout: 200,
-        });
+        const res = await axios.get<WLEDState>(
+          `http://${device.ip}/json/state`,
+          {
+            timeout: 200,
+          },
+        );
         if (res.data) {
           this.snapshot[device.ip] = { device: device, state: res.data };
         }
@@ -83,7 +97,7 @@ export class PauHanaWLED {
     for (const device of this.zones.storm) {
       await this.sendJSON(device, LIGHTING);
     }
-    console.log("Storm triggered!");
+    console.log("WLED Storm triggered!");
   }
 
   // Trigger volcano glow
@@ -92,7 +106,7 @@ export class PauHanaWLED {
     for (const device of this.zones.volcano) {
       await this.sendJSON(device, RED);
     }
-    console.log("Volcano glow triggered!");
+    console.log("WLED Volcano glow triggered!");
   }
 
   // Reset to snapshot state
