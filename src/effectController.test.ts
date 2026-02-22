@@ -4,7 +4,7 @@
  * This file tests the event triggering logic and state management.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { isEventHappening, triggerEvent } from './effectController.js';
 import { EVENTS } from './common/constants.js';
 

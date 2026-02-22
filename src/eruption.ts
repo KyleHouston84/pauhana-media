@@ -2,12 +2,16 @@ import { sonos, snapshotSonos, fadeVolume, playEffect } from "./sonos.js";
 import { ERUPTION_VOLUME, EVENTS } from "./common/constants.js";
 import { sleep } from "./common/helpers.js";
 import { pauhanaWLED } from "./wled.js";
+import { seekVideo } from "./video.js";
 
 // Hue lightning effects commented out in original code (lines 30-32)
 // import { setLights } from "./hue.js";
 // const ALL_LIGHTS = [1, 2, 3, 4];
 
 export async function startEruption(): Promise<void> {
+  // Sync video to eruption scene (30:41 into the video)
+  await seekVideo("30:41");
+
   pauhanaWLED.assignZones({ volcano: ["WLED-Gledopto"] });
 
   const snap = await snapshotSonos();

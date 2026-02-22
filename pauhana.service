@@ -15,7 +15,7 @@ StandardError=journal
 
 # Security hardening
 NoNewPrivileges=true
-PrivateTmp=true
+# PrivateTmp=true  # Disabled to allow access to mpv socket in /tmp
 
 [Install]
 WantedBy=multi-user.target

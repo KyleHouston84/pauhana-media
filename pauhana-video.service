@@ -1,0 +1,41 @@
+[Unit]
+Description=Pau Hana Media - Video Display Loop
+After=sysinit.target local-fs.target
+Wants=sysinit.target
+
+[Service]
+Type=simple
+User=kyle
+# Wait a moment for DRM/KMS to be fully ready
+ExecStartPre=/bin/sleep 3
+
+# Use mpv with DRM/KMS for direct framebuffer output (no X11 needed)
+# --vo=gpu: GPU-accelerated video output
+# --gpu-context=drm: Use DRM/KMS (direct rendering to framebuffer)
+# --loop-file=inf: Loop video infinitely
+# --fullscreen: Fullscreen mode
+# --hwdec=auto: Hardware decoding if available
+# --no-audio-display: Don't show audio visualizations
+# --really-quiet: Minimal console output
+# --input-ipc-server: Enable IPC socket for remote control
+ExecStart=/usr/bin/mpv \
+    --vo=gpu \
+    --gpu-context=drm \
+    --loop-file=inf \
+    --fullscreen \
+    --hwdec=auto \
+    --no-audio-display \
+    --really-quiet \
+    --input-ipc-server=/tmp/mpv-socket \
+    /home/kyle/pauhana-media/video/PauHanaVideoLoop.mp4
+
+# Restart if it crashes
+Restart=on-failure
+RestartSec=5
+
+# Standard output/error logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

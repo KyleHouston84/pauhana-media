@@ -2,4 +2,6 @@
 node_modules/
 .DS_Store
 dist/
+web-dist//video/
+video/
 web-dist/

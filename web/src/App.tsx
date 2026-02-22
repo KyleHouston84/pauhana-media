@@ -190,7 +190,7 @@ function App() {
         <div className="card settings-placeholder">
           <h2>⚙️ Settings</h2>
           <p className="placeholder-text">
-            Coming soon: Control volume, intervals, and more
+            Coming soon: Control volume, intervals, LED settings and more
           </p>
         </div>
       </div>

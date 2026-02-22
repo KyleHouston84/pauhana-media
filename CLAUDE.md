@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Pau Hana Media is a TypeScript-based Node.js event orchestration system for a tiki bar environment that synchronizes audio, lighting, and visual effects. It runs on a Raspberry Pi and controls Sonos speakers, WLED LED strips, and Philips Hue lights to create immersive experiences like thunderstorms and volcano eruptions. Includes a React web dashboard for monitoring and control.
+Pau Hana Media is a TypeScript-based Node.js event orchestration system for a tiki bar environment that synchronizes audio, lighting, video, and visual effects. It runs on a Raspberry Pi and controls Sonos speakers, WLED LED strips, Philips Hue lights, and video playback to create immersive experiences like thunderstorms and volcano eruptions. Includes a React web dashboard for monitoring and control.
 
 ## Development Workflow
 
@@ -35,8 +35,10 @@ npm run test:ui        # Run tests with browser UI
 npm run test:coverage  # Generate coverage report
 
 # Deploy to Raspberry Pi (automated)
-npm run deploy         # Full deployment with deps install
-npm run deploy:quick   # Quick sync (no npm install)
+npm run deploy              # Full deployment with deps install
+npm run deploy:quick        # Quick sync (no npm install)
+./deploy-video.sh           # Deploy video playback system (one-time setup)
+./deploy-video-update.sh    # Update video file only (quick, no mpv reinstall)
 ```
 
 ## Testing
@@ -120,10 +122,17 @@ The project includes automated deployment scripts:
 
 - **deploy.sh**: Full deployment (build, sync, install deps, restart service)
 - **quick-deploy.sh**: Quick deployment (build, sync, restart only)
+- **deploy-video.sh**: Video system deployment (installs mpv, syncs video file, sets up autoplay)
 
 Deploys to: `kyle@pauhana-pi.local:/home/kyle/pauhana-media`
 
-The app runs as a systemd service (`pauhana.service`) and is accessible at:
+The system runs as two systemd services:
+
+- **pauhana.service**: Main orchestration service (Node.js app on port 9001)
+  - **Note**: `PrivateTmp` is disabled to allow IPC socket communication with video service
+- **pauhana-video.service**: Video playback service (mpv with DRM/KMS output to HDMI)
+
+The app is accessible at:
 
 - **http://pauhana.io** (via nginx reverse proxy on port 80)
 - http://pauhana-pi.local:9001 (direct access)
@@ -140,6 +149,7 @@ pauhana-media/
 │   ├── main.ts       # Entry point
 │   ├── api.ts        # Express server + routes
 │   ├── config.ts     # Environment validation
+│   ├── video.ts      # Video playback control (mpv IPC)
 │   ├── types/        # TypeScript type definitions
 │   ├── common/       # Constants and helpers
 │   ├── utils/        # WLED discovery utilities
@@ -150,7 +160,10 @@ pauhana-media/
 │   └── public/       # Static assets
 ├── web-dist/         # Built React app (served by Express)
 ├── audio/            # MP3 sound effects
-└── deploy.sh         # Deployment automation
+├── video/            # Video files (git-ignored)
+│   └── PauHanaVideoLoop.mp4  # Hour-long looping video
+├── deploy.sh         # Main deployment automation
+└── deploy-video.sh   # Video system deployment
 ```
 
 ### Entry Point Flow
@@ -173,13 +186,14 @@ Events are coordinated through `effectController.ts` which:
 
 Event implementations (`storm.ts`, `eruption.ts`) follow this pattern:
 
-1. Assign WLED devices to zones (storm/volcano)
-2. Snapshot current Sonos state (volume, track, position, queue)
-3. Fade volume down to 1
-4. Play sound effect at target volume
-5. Trigger lighting effects
-6. Wait for effect duration
-7. Restore original track/position and fade volume back
+1. Seek video to event timestamp (e.g., eruption seeks to 30:41)
+2. Assign WLED devices to zones (storm/volcano)
+3. Snapshot current Sonos state (volume, track, position, queue)
+4. Fade volume down to 1
+5. Play sound effect at target volume
+6. Trigger lighting effects
+7. Wait for effect duration
+8. Restore original track/position and fade volume back
 
 ### Hardware Controllers
 
@@ -210,6 +224,15 @@ Event implementations (`storm.ts`, `eruption.ts`) follow this pattern:
 - Uses `onoff` library to monitor GPIO 516
 - Platform-aware: only initializes on Linux (gracefully skips on macOS)
 - Debounced button press triggers storm event
+
+**Video Playback** (`video.ts`):
+
+- Controls mpv video player via JSON-RPC IPC socket (`/tmp/mpv-socket`)
+- `seekVideo(timestamp)`: Jumps to specific time in video (supports "MM:SS" or "HH:MM:SS" format)
+- `pauseVideo()` / `playVideo()`: Control playback state
+- `getVideoPosition()`: Query current playback position
+- Non-blocking: Video control errors are logged but don't interrupt events
+- Runs as separate systemd service (`pauhana-video.service`) using mpv with DRM/KMS output
 
 ### API Endpoints
 
@@ -313,18 +336,102 @@ Audio files: Place MP3 files in `audio/` directory. Currently expects:
 
 WLED presets: `src/json/wledStates.ts` contains JSON state objects for effects (LIGHTING, RED).
 
+## Video Playback System
+
+The system includes synchronized video playback on HDMI display using mpv player.
+
+### Video Setup
+
+**Video File:**
+- Location: `video/PauHanaVideoLoop.mp4` (1.7GB, hour-long loop, git-ignored)
+- Content: Day/night cycle with storm and volcano eruption scenes
+- Plays continuously in fullscreen on HDMI output
+
+**Initial Deployment:**
+```bash
+./deploy-video.sh pauhana-pi.local
+```
+
+This script (one-time setup):
+1. Installs mpv media player
+2. Syncs large video file via rsync
+3. Sets up systemd service for autoplay on boot
+4. Configures mpv with IPC socket for remote control
+
+**Updating Video File:**
+```bash
+# 1. Replace video locally: video/PauHanaVideoLoop.mp4
+# 2. Deploy the update
+./deploy-video-update.sh pauhana-pi.local
+```
+
+This script (for video updates):
+1. Syncs new video file via rsync (with progress)
+2. Restarts video service to load new file
+3. Shows service status
+
+Much faster than initial deployment - only syncs the video file!
+
+### Video Control
+
+**mpv Configuration:**
+- Output: DRM/KMS (direct framebuffer, no X11/desktop needed)
+- IPC Socket: `/tmp/mpv-socket` (JSON-RPC interface)
+- Auto-start: Enabled via systemd on boot
+- Looping: Infinite loop
+
+**Video Synchronization:**
+- Eruption effect: Video seeks to 30:41 (volcano scene)
+- Storm effect: Currently not synchronized (could be added)
+
+**Control Commands:**
+```bash
+# Service management
+sudo systemctl status pauhana-video
+sudo systemctl restart pauhana-video
+sudo systemctl stop pauhana-video
+
+# View logs
+sudo journalctl -u pauhana-video -f
+```
+
+**Manual Video Control (via socket):**
+```javascript
+// Seek to timestamp
+await seekVideo("30:41");  // MM:SS format
+await seekVideo("1:30:41");  // HH:MM:SS format
+await seekVideo(1841);  // Seconds
+
+// Playback control
+await pauseVideo();
+await playVideo();
+
+// Query position
+const position = await getVideoPosition();  // Returns seconds
+```
+
+### Important Notes
+
+- Video file is excluded from git due to size (1.7GB)
+- `PrivateTmp=true` is disabled in `pauhana.service` to allow socket communication
+- Video control is non-blocking and errors don't interrupt events
+- mpv runs as user `kyle` for socket permission compatibility
+
 ## Development Notes
 
 - **TypeScript with strict mode** - Full type safety throughout codebase
 - **ES modules** (import/export with .js extensions in imports - required for Node.js ESM)
 - **Target: ES2022** - Compiled JavaScript uses modern features
 - **Custom type definitions** - `src/types/sonos.d.ts` provides types for the Sonos library (no official types available)
-- **No test suite** currently configured
+- **Vitest testing framework** - Fast unit tests with hardware integration tests (skipped by default)
 - **Platform-aware GPIO** - Button initialization gracefully skips on non-Linux systems
 - **Designed for Raspberry Pi** deployment with systemd service
 - **WLED discovery** requires devices to be on same subnet
 - **Events are fire-and-forget** from API (don't block HTTP responses)
 - **Volume fades and track restoration** ensure smooth user experience
 - **Hue lightning effects** are implemented but currently disabled (commented out in storm.ts:30-32 and eruption.ts:30-32)
+- **Video files** in `video/` directory are git-ignored due to size
+- **mpv video player** uses DRM/KMS for direct HDMI output without desktop environment
+- **IPC socket communication** requires `PrivateTmp=false` in pauhana.service for shared `/tmp` access
 - **nginx reverse proxy** runs on port 80 and forwards to Node.js on port 9001
 - **Custom local DNS** via Pi-hole resolves `pauhana.tiki` to the Raspberry Pi

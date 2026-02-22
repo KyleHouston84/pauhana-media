@@ -6,6 +6,7 @@ import { triggerEvent, isEventHappening } from "./effectController.js";
 import { getLogs } from "./logs.js";
 import { snapshotSonos } from "./sonos.js";
 import { config } from "./config.js";
+import { seekVideo, pauseVideo, playVideo, getVideoPosition } from "./video.js";
 
 const app = express();
 const API_KEY = config.apiKey;
@@ -126,6 +127,50 @@ app.get("/logs", async (req: Request, res: Response) => {
     res.type("text/plain").send(logs);
   } catch (err) {
     res.status(500).send("Failed to fetch logs:\n" + err);
+  }
+});
+
+// Video control endpoints
+app.post("/video/play", async (_req: Request, res: Response): Promise<void> => {
+  try {
+    await playVideo();
+    res.json({ ok: true, message: "Video resumed" });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Failed to play video", error: String(err) });
+  }
+});
+
+app.post("/video/pause", async (_req: Request, res: Response): Promise<void> => {
+  try {
+    await pauseVideo();
+    res.json({ ok: true, message: "Video paused" });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Failed to pause video", error: String(err) });
+  }
+});
+
+app.post("/video/seek", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { timestamp } = req.body;
+
+    if (!timestamp) {
+      res.status(400).json({ ok: false, message: "Missing 'timestamp' in request body" });
+      return;
+    }
+
+    await seekVideo(timestamp);
+    res.json({ ok: true, message: `Video seeked to ${timestamp}` });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Failed to seek video", error: String(err) });
+  }
+});
+
+app.get("/video/position", async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const position = await getVideoPosition();
+    res.json({ ok: true, position });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Failed to get video position", error: String(err) });
   }
 });
 
