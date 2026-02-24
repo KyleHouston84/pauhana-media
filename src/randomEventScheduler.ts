@@ -9,8 +9,13 @@ import type { EventType } from "./types/events.js";
 
 // Store timeout ID so we can cancel/reset the scheduler
 let scheduledTimeout: NodeJS.Timeout | null = null;
+let randomEventsEnabled = true;
 
 export function scheduleRandomEvent(): void {
+  // Don't schedule if disabled
+  if (!randomEventsEnabled) {
+    return;
+  }
   const min = MIN_EVENT_INTERVAL_MINUTES * 60 * 1000;
   const max = MAX_EVENT_INTERVAL_MINUTES * 60 * 1000;
 
@@ -50,4 +55,36 @@ export function resetScheduler(): void {
   }
   console.log("🔄 Random event scheduler reset");
   scheduleRandomEvent();
+}
+
+/**
+ * Enable random event scheduling
+ */
+export function enableRandomEvents(): void {
+  if (!randomEventsEnabled) {
+    randomEventsEnabled = true;
+    console.log("✅ Random events enabled");
+    scheduleRandomEvent();
+  }
+}
+
+/**
+ * Disable random event scheduling
+ */
+export function disableRandomEvents(): void {
+  if (randomEventsEnabled) {
+    randomEventsEnabled = false;
+    if (scheduledTimeout) {
+      clearTimeout(scheduledTimeout);
+      scheduledTimeout = null;
+    }
+    console.log("🚫 Random events disabled");
+  }
+}
+
+/**
+ * Get current random events enabled state
+ */
+export function isRandomEventsEnabled(): boolean {
+  return randomEventsEnabled;
 }

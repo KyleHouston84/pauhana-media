@@ -7,6 +7,7 @@ import { getLogs } from "./logs.js";
 import { snapshotSonos } from "./sonos.js";
 import { config } from "./config.js";
 import { seekVideo, pauseVideo, playVideo, getVideoPosition } from "./video.js";
+import { isRandomEventsEnabled, enableRandomEvents, disableRandomEvents } from "./randomEventScheduler.js";
 
 const app = express();
 const API_KEY = config.apiKey;
@@ -25,7 +26,7 @@ app.use(express.json());
 // Custom middleware function to check headers
 app.use((req: Request, res: Response, next: NextFunction): void => {
   // Only check API key for protected API routes
-  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs");
+  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs") || req.path.startsWith("/video") || req.path.startsWith("/settings");
 
   if (isProtectedRoute && req.headers["x-api-key"] !== API_KEY) {
     res.status(403).json({ ok: false });
@@ -172,6 +173,43 @@ app.get("/video/position", async (_req: Request, res: Response): Promise<void> =
   } catch (err) {
     res.status(500).json({ ok: false, message: "Failed to get video position", error: String(err) });
   }
+});
+
+// Random events settings endpoints
+app.get("/settings/random-events", async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const enabled = isRandomEventsEnabled();
+    res.json({ ok: true, enabled });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Failed to get random events state", error: String(err) });
+  }
+});
+
+app.post("/settings/random-events", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { enabled } = req.body;
+
+    if (typeof enabled !== "boolean") {
+      res.status(400).json({ ok: false, message: "Missing or invalid 'enabled' boolean in request body" });
+      return;
+    }
+
+    if (enabled) {
+      enableRandomEvents();
+    } else {
+      disableRandomEvents();
+    }
+
+    res.json({ ok: true, enabled, message: enabled ? "Random events enabled" : "Random events disabled" });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Failed to update random events state", error: String(err) });
+  }
+});
+
+// Catch-all route for React Router - must be last!
+// Serves index.html for all non-API routes to support client-side routing
+app.use((_req: Request, res: Response) => {
+  res.sendFile(path.join(WEB_DIR, "index.html"));
 });
 
 app.listen(9001, () => {

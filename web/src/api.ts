@@ -26,6 +26,18 @@ interface TriggerResponse {
   message: string;
 }
 
+interface VideoResponse {
+  ok: boolean;
+  message?: string;
+  position?: number;
+}
+
+interface RandomEventsResponse {
+  ok: boolean;
+  enabled: boolean;
+  message?: string;
+}
+
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${API_BASE}/health`);
   if (!response.ok) throw new Error('Failed to fetch health');
@@ -51,5 +63,75 @@ export async function triggerEruption(): Promise<TriggerResponse> {
     },
   });
   if (!response.ok) throw new Error('Failed to trigger eruption');
+  return response.json();
+}
+
+// Video Control Functions
+export async function playVideo(): Promise<VideoResponse> {
+  const response = await fetch(`${API_BASE}/video/play`, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': API_KEY,
+    },
+  });
+  if (!response.ok) throw new Error('Failed to play video');
+  return response.json();
+}
+
+export async function pauseVideo(): Promise<VideoResponse> {
+  const response = await fetch(`${API_BASE}/video/pause`, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': API_KEY,
+    },
+  });
+  if (!response.ok) throw new Error('Failed to pause video');
+  return response.json();
+}
+
+export async function seekVideo(timestamp: string): Promise<VideoResponse> {
+  const response = await fetch(`${API_BASE}/video/seek`, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ timestamp }),
+  });
+  if (!response.ok) throw new Error('Failed to seek video');
+  return response.json();
+}
+
+export async function getVideoPosition(): Promise<VideoResponse> {
+  const response = await fetch(`${API_BASE}/video/position`, {
+    headers: {
+      'X-API-Key': API_KEY,
+    },
+  });
+  if (!response.ok) throw new Error('Failed to get video position');
+  return response.json();
+}
+
+// Random Events Settings Functions
+export async function getRandomEventsEnabled(): Promise<RandomEventsResponse> {
+  const response = await fetch(`${API_BASE}/settings/random-events`, {
+    headers: {
+      'X-API-Key': API_KEY,
+    },
+  });
+  if (!response.ok) throw new Error('Failed to get random events state');
+  return response.json();
+}
+
+export async function setRandomEventsEnabled(enabled: boolean): Promise<RandomEventsResponse> {
+  const response = await fetch(`${API_BASE}/settings/random-events`, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ enabled }),
+  });
+  if (!response.ok) throw new Error('Failed to set random events state');
   return response.json();
 }
