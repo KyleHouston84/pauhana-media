@@ -41,26 +41,28 @@
   font-size: 1.2rem;
 }
 
-.dashboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.card-container {
+  display: flex;
   gap: 1.5rem;
   flex: 1;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .card {
   background: #1a1a1a;
   border-radius: 12px;
-  padding: 1.5rem;
+  box-sizing: border-box;
+  padding: 1rem;
   border: 1px solid #333;
+  flex: 1 1 18.75rem;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+.card.logs-card {
+  flex: 1 0 100%;
 }
 
 .card h2 {
@@ -268,10 +270,6 @@
     font-size: 2rem;
   }
 
-  .dashboard {
-    grid-template-columns: 1fr;
-  }
-
   .app {
     padding: 1rem;
   }
@@ -361,4 +359,156 @@ input:checked + .toggle-slider:before {
 input:disabled + .toggle-slider {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+/* Countdown Display */
+.countdown-display {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #ddd;
+}
+
+.countdown-time {
+  font-weight: 700;
+  color: #667eea;
+  font-size: 1rem;
+}
+
+/* System Logs Styles */
+.logs-card {
+  grid-column: 1 / -1;
+}
+
+.logs-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.logs-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logs-controls label {
+  font-size: 0.9rem;
+  color: #ddd;
+}
+
+.logs-controls select {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.logs-controls select:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.logs-controls select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.logs-button {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+}
+
+.logs-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.logs-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #ddd;
+  user-select: none;
+}
+
+.auto-refresh-toggle input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.logs-error {
+  padding: 1rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  color: #f87171;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.logs-container {
+  background: #000;
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.logs-content {
+  margin: 0;
+  font-family:
+    "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #00ff00;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Custom scrollbar for logs */
+.logs-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }

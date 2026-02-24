@@ -10,16 +10,19 @@ import type { EventType } from "./types/events.js";
 // Store timeout ID so we can cancel/reset the scheduler
 let scheduledTimeout: NodeJS.Timeout | null = null;
 let randomEventsEnabled = true;
+let nextEventTime: number | null = null; // Timestamp in milliseconds
 
 export function scheduleRandomEvent(): void {
   // Don't schedule if disabled
   if (!randomEventsEnabled) {
+    nextEventTime = null;
     return;
   }
   const min = MIN_EVENT_INTERVAL_MINUTES * 60 * 1000;
   const max = MAX_EVENT_INTERVAL_MINUTES * 60 * 1000;
 
   const delay = Math.floor(Math.random() * (max - min) + min);
+  nextEventTime = Date.now() + delay;
 
   console.log(`Next event check in ${Math.round(delay / 60000)} minutes ⏰`);
 
@@ -78,6 +81,7 @@ export function disableRandomEvents(): void {
       clearTimeout(scheduledTimeout);
       scheduledTimeout = null;
     }
+    nextEventTime = null;
     console.log("🚫 Random events disabled");
   }
 }
@@ -87,4 +91,11 @@ export function disableRandomEvents(): void {
  */
 export function isRandomEventsEnabled(): boolean {
   return randomEventsEnabled;
+}
+
+/**
+ * Get timestamp (milliseconds) of next scheduled random event
+ */
+export function getNextEventTime(): number | null {
+  return nextEventTime;
 }

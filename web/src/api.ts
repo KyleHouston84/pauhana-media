@@ -35,6 +35,7 @@ interface VideoResponse {
 interface RandomEventsResponse {
   ok: boolean;
   enabled: boolean;
+  nextEventTime?: number | null;
   message?: string;
 }
 
@@ -134,4 +135,15 @@ export async function setRandomEventsEnabled(enabled: boolean): Promise<RandomEv
   });
   if (!response.ok) throw new Error('Failed to set random events state');
   return response.json();
+}
+
+// System Logs Functions
+export async function getLogs(lines: number = 100): Promise<string> {
+  const response = await fetch(`${API_BASE}/logs?lines=${lines}`, {
+    headers: {
+      'X-API-Key': API_KEY,
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch logs');
+  return response.text();
 }

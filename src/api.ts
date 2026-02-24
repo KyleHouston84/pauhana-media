@@ -7,7 +7,7 @@ import { getLogs } from "./logs.js";
 import { snapshotSonos } from "./sonos.js";
 import { config } from "./config.js";
 import { seekVideo, pauseVideo, playVideo, getVideoPosition } from "./video.js";
-import { isRandomEventsEnabled, enableRandomEvents, disableRandomEvents } from "./randomEventScheduler.js";
+import { isRandomEventsEnabled, enableRandomEvents, disableRandomEvents, getNextEventTime } from "./randomEventScheduler.js";
 
 const app = express();
 const API_KEY = config.apiKey;
@@ -179,7 +179,8 @@ app.get("/video/position", async (_req: Request, res: Response): Promise<void> =
 app.get("/settings/random-events", async (_req: Request, res: Response): Promise<void> => {
   try {
     const enabled = isRandomEventsEnabled();
-    res.json({ ok: true, enabled });
+    const nextEventTime = getNextEventTime();
+    res.json({ ok: true, enabled, nextEventTime });
   } catch (err) {
     res.status(500).json({ ok: false, message: "Failed to get random events state", error: String(err) });
   }

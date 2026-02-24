@@ -69,9 +69,7 @@ export function Home() {
   };
 
   if (loading) {
-    return (
-      <div className="loading">Loading Pau Hana System...</div>
-    );
+    return <div className="loading">Loading Pau Hana System...</div>;
   }
 
   if (error) {
@@ -86,7 +84,7 @@ export function Home() {
 
   return (
     <>
-      <div className="dashboard">
+      <div className="card-container">
         {/* System Status */}
         <div className="card">
           <h2>System Status</h2>

@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { playVideo, pauseVideo, seekVideo, getVideoPosition, getRandomEventsEnabled, setRandomEventsEnabled } from "../api";
+import {
+  playVideo,
+  pauseVideo,
+  seekVideo,
+  getVideoPosition,
+  getRandomEventsEnabled,
+  setRandomEventsEnabled,
+  getLogs,
+} from "../api";
 import "../App.css";
 
 export function Admin() {
@@ -9,6 +17,13 @@ export function Admin() {
   const [message, setMessage] = useState("");
   const [randomEventsEnabled, setRandomEventsEnabledState] = useState(true);
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [nextEventTime, setNextEventTime] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<string>("");
+  const [logs, setLogs] = useState<string>("");
+  const [logLines, setLogLines] = useState<number>(100);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [logsError, setLogsError] = useState<string>("");
 
   const fetchVideoPosition = async () => {
     try {
@@ -25,6 +40,7 @@ export function Admin() {
     try {
       const data = await getRandomEventsEnabled();
       setRandomEventsEnabledState(data.enabled);
+      setNextEventTime(data.nextEventTime || null);
     } catch (err) {
       console.error("Failed to get random events state:", err);
     }
@@ -37,15 +53,69 @@ export function Admin() {
     return () => clearInterval(interval);
   }, []);
 
+  // Update countdown every second and refetch next event time every 30 seconds
+  useEffect(() => {
+    const updateCountdown = () => {
+      if (!randomEventsEnabled) {
+        setCountdown("Disabled");
+        return;
+      }
+
+      if (!nextEventTime) {
+        setCountdown("Calculating...");
+        return;
+      }
+
+      const now = Date.now();
+      const timeLeft = nextEventTime - now;
+
+      if (timeLeft <= 0) {
+        setCountdown("Any moment now...");
+        return;
+      }
+
+      const minutes = Math.floor(timeLeft / 60000);
+      const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+      if (minutes > 0) {
+        setCountdown(`${minutes}m ${seconds}s`);
+      } else {
+        setCountdown(`${seconds}s`);
+      }
+    };
+
+    updateCountdown();
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    const refetchInterval = setInterval(fetchRandomEventsState, 30000);
+
+    return () => {
+      clearInterval(countdownInterval);
+      clearInterval(refetchInterval);
+    };
+  }, [randomEventsEnabled, nextEventTime]);
+
+  // Fetch logs on mount and when line count changes
+  useEffect(() => {
+    fetchLogs();
+  }, [logLines]);
+
+  // Auto-refresh logs
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(fetchLogs, 5000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, logLines]);
+
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
     if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const showMessage = (msg: string) => {
@@ -115,7 +185,11 @@ export function Admin() {
       const newState = !randomEventsEnabled;
       const result = await setRandomEventsEnabled(newState);
       setRandomEventsEnabledState(result.enabled);
-      showMessage(result.message || (newState ? "Random events enabled" : "Random events disabled"));
+      setNextEventTime(result.nextEventTime || null);
+      showMessage(
+        result.message ||
+          (newState ? "Random events enabled" : "Random events disabled"),
+      );
     } catch (err) {
       showMessage("Failed to update random events setting");
     } finally {
@@ -123,9 +197,27 @@ export function Admin() {
     }
   };
 
+  const fetchLogs = async () => {
+    setLogsLoading(true);
+    setLogsError("");
+    try {
+      const data = await getLogs(logLines);
+      setLogs(data);
+    } catch (err) {
+      setLogsError("Failed to fetch logs");
+      console.error("Failed to fetch logs:", err);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const handleRefreshLogs = () => {
+    fetchLogs();
+  };
+
   return (
     <>
-      <div className="dashboard">
+      <div className="card-container">
         {/* Video Controls */}
         <div className="card">
           <h2>🎬 Video Controls</h2>
@@ -221,8 +313,15 @@ export function Admin() {
               <div className="setting-info">
                 <h3>Random Events</h3>
                 <p className="setting-description">
-                  Automatically trigger random storm or eruption events when music is playing
+                  Automatically trigger random storm or eruption events when
+                  music is playing
                 </p>
+                {countdown && (
+                  <p className="countdown-display">
+                    Next event:{" "}
+                    <span className="countdown-time">{countdown}</span>
+                  </p>
+                )}
               </div>
               <label className="toggle-switch">
                 <input
@@ -247,6 +346,51 @@ export function Admin() {
           <p className="placeholder-text">
             Coming soon: Storm duration, eruption effects, sound levels
           </p>
+        </div>
+
+        {/* System Logs */}
+        <div className="card logs-card">
+          <h2>📋 System Logs</h2>
+
+          <div className="logs-controls">
+            <div className="logs-controls-left">
+              <label htmlFor="log-lines">Lines:</label>
+              <select
+                id="log-lines"
+                value={logLines}
+                onChange={(e) => setLogLines(Number(e.target.value))}
+                disabled={logsLoading}
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={500}>500</option>
+              </select>
+
+              <button
+                className="logs-button"
+                onClick={handleRefreshLogs}
+                disabled={logsLoading}
+              >
+                {logsLoading ? "Loading..." : "🔄 Refresh"}
+              </button>
+            </div>
+
+            <label className="auto-refresh-toggle">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+              />
+              <span>Auto-refresh (5s)</span>
+            </label>
+          </div>
+
+          {logsError && <div className="logs-error">{logsError}</div>}
+
+          <div className="logs-container">
+            <pre className="logs-content">{logs || "No logs available"}</pre>
+          </div>
         </div>
       </div>
     </>
