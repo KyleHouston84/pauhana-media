@@ -224,6 +224,63 @@ app.post("/wled/discover", async (_req: Request, res: Response): Promise<void> =
   }
 });
 
+app.get("/wled/devices/:ip/info", async (req: Request, res: Response): Promise<void> => {
+  const { ip } = req.params;
+  const knownDevice = pauhanaWLED.devices.find((d) => d.ip === ip);
+  if (!knownDevice) {
+    res.status(404).json({ ok: false, message: "Device not found" });
+    return;
+  }
+  try {
+    const response = await fetch(`http://${ip}/json`, { signal: AbortSignal.timeout(3000) });
+    const data = await response.json() as { info?: Record<string, unknown>; state?: Record<string, unknown> };
+    res.json({
+      ok: true,
+      info: {
+        ip,
+        name: (data.info as { name?: string })?.name,
+        version: (data.info as { ver?: string })?.ver,
+        ledCount: (data.info as { leds?: { count?: number } })?.leds?.count,
+        rssi: (data.info as { wifi?: { rssi?: number } })?.wifi?.rssi,
+        on: (data.state as { on?: boolean })?.on,
+        brightness: (data.state as { bri?: number })?.bri,
+      },
+    });
+  } catch (err) {
+    res.status(503).json({ ok: false, message: "Device unreachable", error: String(err) });
+  }
+});
+
+app.post("/wled/devices/:ip/rename", async (req: Request, res: Response): Promise<void> => {
+  const { ip } = req.params;
+  const { name } = req.body;
+  if (!name || typeof name !== "string") {
+    res.status(400).json({ ok: false, message: "Missing or invalid 'name'" });
+    return;
+  }
+  const device = pauhanaWLED.devices.find((d) => d.ip === ip);
+  if (!device) {
+    res.status(404).json({ ok: false, message: "Device not found" });
+    return;
+  }
+  try {
+    const response = await fetch(`http://${ip}/json/cfg`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: { name } }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!response.ok) {
+      res.status(500).json({ ok: false, message: "Device rejected rename" });
+      return;
+    }
+    device.name = name;
+    res.json({ ok: true, message: `Renamed to "${name}"` });
+  } catch (err) {
+    res.status(503).json({ ok: false, message: "Device unreachable", error: String(err) });
+  }
+});
+
 // Catch-all route for React Router - must be last!
 // Serves index.html for all non-API routes to support client-side routing
 app.use((_req: Request, res: Response) => {

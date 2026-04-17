@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { getWLEDDevices, discoverWLEDDevices } from "../api";
 import type { WLEDDevice } from "../api";
 
@@ -62,15 +63,22 @@ export function WLEDDevices() {
         </div>
       )}
 
-      <div style={{ marginTop: "1rem" }}>
+      <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem" }}>
         <button
           className="trigger-button"
           onClick={handleDiscover}
           disabled={discovering}
-          style={{ width: "100%" }}
+          style={{ flex: 1 }}
         >
           {discovering ? "Scanning network..." : "🔍 Re-discover"}
         </button>
+        <Link
+          to="/wled"
+          className="trigger-button"
+          style={{ flex: 1, textAlign: "center", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          ⚙️ Configure
+        </Link>
       </div>
 
       {message && (

@@ -171,6 +171,35 @@ export async function discoverWLEDDevices(): Promise<WLEDDevicesResponse> {
   return response.json();
 }
 
+export interface WLEDDeviceInfo {
+  ip: string;
+  name: string;
+  version?: string;
+  ledCount?: number;
+  rssi?: number;
+  on?: boolean;
+  brightness?: number;
+}
+
+export async function getWLEDDeviceInfo(ip: string): Promise<WLEDDeviceInfo> {
+  const response = await fetch(`${API_BASE}/wled/devices/${ip}/info`, {
+    headers: { 'X-API-Key': API_KEY },
+  });
+  if (!response.ok) throw new Error(`Failed to fetch info for ${ip}`);
+  const data = await response.json();
+  return data.info as WLEDDeviceInfo;
+}
+
+export async function renameWLEDDevice(ip: string, name: string): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(`${API_BASE}/wled/devices/${ip}/rename`, {
+    method: 'POST',
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) throw new Error('Failed to rename device');
+  return response.json();
+}
+
 // System Logs Functions
 export async function getLogs(lines: number = 100): Promise<string> {
   const response = await fetch(`${API_BASE}/logs?lines=${lines}`, {
