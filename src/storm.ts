@@ -23,6 +23,7 @@ export async function summonStorm(): Promise<void> {
 
   await sleep(60000);
   // await sleep(10000);
+  await sonos.selectQueue();
   if (snap.track?.uri) {
     await sonos.selectTrack(snap.track.queuePosition);
     await sonos.seek(snap.track.position);

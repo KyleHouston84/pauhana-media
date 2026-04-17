@@ -27,6 +27,7 @@ export async function startEruption(): Promise<void> {
 
   await sleep(86000);
   // await sleep(10000);
+  await sonos.selectQueue();
   if (snap.track?.uri) {
     await sonos.selectTrack(snap.track.queuePosition);
     await sonos.seek(snap.track.position);

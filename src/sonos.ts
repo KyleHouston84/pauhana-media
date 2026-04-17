@@ -60,6 +60,6 @@ export async function playEffect(
   eventVolume: number,
 ): Promise<void> {
   await fadeVolume(snap.volume, 1, 3000);
-  await sonos.play(uri);
+  await sonos.setAVTransportURI(uri);
   await fadeVolume(1, eventVolume, 1500);
 }

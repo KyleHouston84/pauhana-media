@@ -10,6 +10,8 @@ declare module "sonos" {
     currentTrack(): Promise<Track>;
     play(uri?: string): Promise<void>;
     playWithoutQueue(uri?: string): Promise<void>;
+    setAVTransportURI(uri: string): Promise<boolean>;
+    selectQueue(): Promise<boolean>;
     selectTrack(trackNumber: number): Promise<void>;
     seek(position: string): Promise<void>;
     pause(): Promise<void>;
