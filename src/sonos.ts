@@ -22,20 +22,26 @@ export async function snapshotSonos(): Promise<SonosSnapshot> {
   return {
     volume,
     state,
-    track: track ? {
-      uri: track.uri,
-      position: track.position,
-      queuePosition: track.queuePosition,
-      artist: track.artist,
-      title: track.title,
-      album: track.album,
-      albumArtURI: track.albumArtURI,
-    } : null,
+    track: track
+      ? {
+          uri: track.uri,
+          position: track.position,
+          queuePosition: track.queuePosition,
+          artist: track.artist,
+          title: track.title,
+          album: track.album,
+          albumArtURI: track.albumArtURI,
+        }
+      : null,
     queue,
   };
 }
 
-export async function fadeVolume(from: number, to: number, durationMs: number): Promise<void> {
+export async function fadeVolume(
+  from: number,
+  to: number,
+  durationMs: number,
+): Promise<void> {
   const stepTime = durationMs / SONOS_STEPS;
   const delta = (to - from) / SONOS_STEPS;
 
@@ -48,7 +54,11 @@ export async function fadeVolume(from: number, to: number, durationMs: number): 
   }
 }
 
-export async function playEffect(uri: string, snap: SonosSnapshot, eventVolume: number): Promise<void> {
+export async function playEffect(
+  uri: string,
+  snap: SonosSnapshot,
+  eventVolume: number,
+): Promise<void> {
   await fadeVolume(snap.volume, 1, 3000);
   await sonos.play(uri);
   await fadeVolume(1, eventVolume, 1500);

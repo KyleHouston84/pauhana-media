@@ -137,6 +137,40 @@ export async function setRandomEventsEnabled(enabled: boolean): Promise<RandomEv
   return response.json();
 }
 
+// WLED Functions
+export interface WLEDDevice {
+  ip: string;
+  name: string;
+}
+
+interface WLEDDevicesResponse {
+  ok: boolean;
+  devices: WLEDDevice[];
+  count: number;
+  message?: string;
+}
+
+export async function getWLEDDevices(): Promise<WLEDDevicesResponse> {
+  const response = await fetch(`${API_BASE}/wled/devices`, {
+    headers: {
+      'X-API-Key': API_KEY,
+    },
+  });
+  if (!response.ok) throw new Error('Failed to fetch WLED devices');
+  return response.json();
+}
+
+export async function discoverWLEDDevices(): Promise<WLEDDevicesResponse> {
+  const response = await fetch(`${API_BASE}/wled/discover`, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': API_KEY,
+    },
+  });
+  if (!response.ok) throw new Error('WLED discovery failed');
+  return response.json();
+}
+
 // System Logs Functions
 export async function getLogs(lines: number = 100): Promise<string> {
   const response = await fetch(`${API_BASE}/logs?lines=${lines}`, {

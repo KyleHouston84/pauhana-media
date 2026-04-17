@@ -8,6 +8,7 @@ import { snapshotSonos } from "./sonos.js";
 import { config } from "./config.js";
 import { seekVideo, pauseVideo, playVideo, getVideoPosition } from "./video.js";
 import { isRandomEventsEnabled, enableRandomEvents, disableRandomEvents, getNextEventTime } from "./randomEventScheduler.js";
+import { pauhanaWLED } from "./wled.js";
 
 const app = express();
 const API_KEY = config.apiKey;
@@ -26,7 +27,7 @@ app.use(express.json());
 // Custom middleware function to check headers
 app.use((req: Request, res: Response, next: NextFunction): void => {
   // Only check API key for protected API routes
-  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs") || req.path.startsWith("/video") || req.path.startsWith("/settings");
+  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs") || req.path.startsWith("/video") || req.path.startsWith("/settings") || req.path.startsWith("/wled");
 
   if (isProtectedRoute && req.headers["x-api-key"] !== API_KEY) {
     res.status(403).json({ ok: false });
@@ -204,6 +205,22 @@ app.post("/settings/random-events", async (req: Request, res: Response): Promise
     res.json({ ok: true, enabled, message: enabled ? "Random events enabled" : "Random events disabled" });
   } catch (err) {
     res.status(500).json({ ok: false, message: "Failed to update random events state", error: String(err) });
+  }
+});
+
+// WLED endpoints
+app.get("/wled/devices", (_req: Request, res: Response): void => {
+  const devices = pauhanaWLED.devices;
+  res.json({ ok: true, devices, count: devices.length });
+});
+
+app.post("/wled/discover", async (_req: Request, res: Response): Promise<void> => {
+  try {
+    await pauhanaWLED.discover();
+    const devices = pauhanaWLED.devices;
+    res.json({ ok: true, devices, count: devices.length, message: `Found ${devices.length} device(s)` });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Discovery failed", error: String(err) });
   }
 });
 

@@ -6,13 +6,16 @@ import { resetScheduler } from "./randomEventScheduler.js";
 import type { EventType } from "./types/events.js";
 
 let eventHappening = false;
+let isAutomaticEvent = false;
 
 /**
  * Triggers an event
  * @param type "STORM" | "ERUPTION"
+ * @param automatic Whether this was triggered automatically by the scheduler
  * @returns boolean indicating whether the event was triggered
  */
-export async function triggerEvent(type: EventType): Promise<boolean> {
+export async function triggerEvent(type: EventType, automatic = false): Promise<boolean> {
+  isAutomaticEvent = automatic;
   if (eventHappening) {
     console.log("⚠ An event is already active");
     return false;
@@ -48,7 +51,11 @@ export async function triggerEvent(type: EventType): Promise<boolean> {
     console.log(`${EVENTS[type].endLog}`);
 
     // Reset random event scheduler to prevent back-to-back events
-    resetScheduler();
+    // Only reset for manual triggers - automatic triggers already reschedule themselves
+    if (!isAutomaticEvent) {
+      resetScheduler();
+    }
+    isAutomaticEvent = false;
   }
   return true;
 }

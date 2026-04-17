@@ -249,17 +249,51 @@ Protected endpoints require `X-API-Key` header (checked by middleware). Public e
 - `POST /storm` - Triggers storm event (409 if event already active)
 - `POST /erupt` - Triggers volcano eruption (409 if event already active)
 - `GET /logs?lines=N` - Returns last N lines of logs (max 500)
+- `POST /video/play` - Resume video playback
+- `POST /video/pause` - Pause video playback
+- `POST /video/seek` - Seek video to timestamp (body: `{timestamp: "MM:SS"}`)
+- `GET /video/position` - Get current video position in seconds
+- `GET /settings/random-events` - Get random events state (enabled, nextEventTime)
+- `POST /settings/random-events` - Enable/disable random events (body: `{enabled: boolean}`)
 
 ### React Dashboard
 
-Located in `web/` directory, built with React + TypeScript + Vite.
+Located in `web/` directory, built with React + TypeScript + Vite. Uses React Router v7 for multi-page navigation.
 
-**Features:**
+**Routes:**
+
+- `/` - Public home page (system status, Sonos info, event triggers)
+- `/admin` - Admin page (video controls, settings, logs) - hidden from main navigation
+
+**Public Home Page Features:**
 
 - Real-time system status (polls `/health` every 5 seconds)
 - Live Sonos playback info with album artwork
 - Event trigger buttons (Storm, Eruption)
 - Tiki bar themed styling
+
+**Admin Page Features (`/admin`):**
+
+- **Video Controls:**
+  - Current playback position display
+  - Play/Pause buttons
+  - Manual seek input (MM:SS or HH:MM:SS format)
+  - Quick seek buttons (Start 0:00, Eruption 30:41)
+  - Video position updates every 5 seconds
+
+- **System Settings:**
+  - Random Events toggle (enable/disable automatic events)
+  - Live countdown timer to next random event (updates every second)
+  - Auto-refreshes next event time every 30 seconds
+  - Shows "Disabled", "Calculating...", or live countdown (e.g., "45m 32s")
+
+- **System Logs Viewer:**
+  - Line count selector (50/100/200/500 lines)
+  - Manual refresh button
+  - Auto-refresh toggle (updates every 5 seconds)
+  - Terminal-style display (black background, green text, monospace font)
+  - Scrollable container with custom themed scrollbar
+  - Error handling with retry capability
 
 **Development:**
 
@@ -274,7 +308,7 @@ npm run dev    # Starts Vite dev server on port 5173 with proxy
 npm run build:web   # Builds to ../web-dist/
 ```
 
-The Express server serves the built React app from `web-dist/` at the root path. Album art URLs are constructed on the backend to point directly to the Sonos speaker's HTTP endpoint.
+The Express server serves the built React app from `web-dist/` at the root path with a catch-all route to support React Router client-side routing. Album art URLs are constructed on the backend to point directly to the Sonos speaker's HTTP endpoint.
 
 ### Random Event Scheduler
 
@@ -284,6 +318,9 @@ The Express server serves the built React app from `web-dist/` at the root path.
 - Checks if Sonos is playing music
 - If playing, randomly picks STORM or ERUPTION
 - Schedules next check regardless of outcome
+- Can be enabled/disabled via API (`/settings/random-events`)
+- Tracks exact timestamp of next scheduled event
+- Provides `getNextEventTime()` for countdown display in admin UI
 
 ### Network Discovery
 

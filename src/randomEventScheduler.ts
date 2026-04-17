@@ -34,7 +34,7 @@ export function scheduleRandomEvent(): void {
         const randomEventType =
           eventTypeArr[Math.floor(Math.random() * eventTypeArr.length)];
         console.log(`Bar is active — triggering ${randomEventType} 🌩️`);
-        await triggerEvent(randomEventType);
+        await triggerEvent(randomEventType, true); // Mark as automatic trigger
       } else {
         console.log("Bar inactive or storm already running — skipping");
       }

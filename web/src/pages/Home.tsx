@@ -174,14 +174,6 @@ export function Home() {
             </div>
           )}
         </div>
-
-        {/* Settings Placeholder */}
-        <div className="card settings-placeholder">
-          <h2>⚙️ Settings</h2>
-          <p className="placeholder-text">
-            Coming soon: Control volume, intervals, LED settings and more
-          </p>
-        </div>
       </div>
     </>
   );
