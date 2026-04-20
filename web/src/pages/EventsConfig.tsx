@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getEvents, updateEvent, getWLEDDevices } from "../api";
-import type { RuntimeEventConfig, WLEDDevice } from "../api";
+import { getEvents, updateEvent, getWLEDDevices, getEffectLibrary } from "../api";
+import type { RuntimeEventConfig, WLEDDevice, StoredEffect, EventWLEDDeviceAssignment } from "../api";
 import "../App.css";
 
-const EVENT_META: Record<string, { emoji: string; label: string; hasVideoSeek: boolean }> = {
-  STORM: { emoji: "🌩️", label: "Storm", hasVideoSeek: false },
-  ERUPTION: { emoji: "🌋", label: "Eruption", hasVideoSeek: true },
+const EVENT_META: Record<string, { emoji: string; label: string }> = {
+  STORM: { emoji: "🌩️", label: "Storm" },
+  ERUPTION: { emoji: "🌋", label: "Eruption" },
 };
 
 const inputStyle: React.CSSProperties = {
@@ -24,17 +24,19 @@ interface EventCardProps {
   type: string;
   config: RuntimeEventConfig;
   allDevices: WLEDDevice[];
+  allEffects: Record<string, StoredEffect>;
   onSave: (type: string, patch: Partial<RuntimeEventConfig>) => Promise<void>;
 }
 
-function EventCard({ type, config, allDevices, onSave }: EventCardProps) {
-  const meta = EVENT_META[type] ?? { emoji: "⚡", label: type, hasVideoSeek: false };
+function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardProps) {
+  const meta = EVENT_META[type] ?? { emoji: "⚡", label: type };
 
   const [enabled, setEnabled] = useState(config.enabled);
   const [volume, setVolume] = useState(String(config.volume));
   const [durationSec, setDurationSec] = useState(String(config.durationSec));
   const [videoSeekTime, setVideoSeekTime] = useState(config.videoSeekTime ?? "");
-  const [assignedDevices, setAssignedDevices] = useState<string[]>(config.wled.deviceNames);
+  const [videoSeekEnabled, setVideoSeekEnabled] = useState(config.videoSeekTime !== null);
+  const [assignments, setAssignments] = useState<EventWLEDDeviceAssignment[]>(config.wled.devices);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -43,7 +45,8 @@ function EventCard({ type, config, allDevices, onSave }: EventCardProps) {
     setVolume(String(config.volume));
     setDurationSec(String(config.durationSec));
     setVideoSeekTime(config.videoSeekTime ?? "");
-    setAssignedDevices(config.wled.deviceNames);
+    setVideoSeekEnabled(config.videoSeekTime !== null);
+    setAssignments(config.wled.devices);
   }, [config]);
 
   const showMessage = (msg: string) => {
@@ -51,14 +54,22 @@ function EventCard({ type, config, allDevices, onSave }: EventCardProps) {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const handleAddDevice = (name: string) => {
-    if (name && !assignedDevices.includes(name)) {
-      setAssignedDevices((prev) => [...prev, name]);
-    }
+  const effectNames = Object.keys(allEffects);
+  const defaultEffect = effectNames[0] ?? "";
+
+  const handleAddDevice = (deviceName: string) => {
+    if (!deviceName || assignments.some((a) => a.name === deviceName)) return;
+    setAssignments((prev) => [...prev, { name: deviceName, effect: defaultEffect }]);
   };
 
-  const handleRemoveDevice = (name: string) => {
-    setAssignedDevices((prev) => prev.filter((d) => d !== name));
+  const handleRemoveDevice = (deviceName: string) => {
+    setAssignments((prev) => prev.filter((a) => a.name !== deviceName));
+  };
+
+  const handleChangeEffect = (deviceName: string, effect: string) => {
+    setAssignments((prev) =>
+      prev.map((a) => (a.name === deviceName ? { ...a, effect } : a)),
+    );
   };
 
   const handleSave = async () => {
@@ -73,8 +84,8 @@ function EventCard({ type, config, allDevices, onSave }: EventCardProps) {
         enabled,
         volume: vol,
         durationSec: dur,
-        ...(meta.hasVideoSeek ? { videoSeekTime: videoSeekTime.trim() || null } : {}),
-        wled: { deviceNames: assignedDevices, effect: config.wled.effect },
+        videoSeekTime: videoSeekEnabled ? (videoSeekTime.trim() || null) : null,
+        wled: { devices: assignments },
       });
       showMessage("Saved");
     } catch {
@@ -84,7 +95,7 @@ function EventCard({ type, config, allDevices, onSave }: EventCardProps) {
     }
   };
 
-  const unassignedDevices = allDevices.filter((d) => !assignedDevices.includes(d.name));
+  const unassignedDevices = allDevices.filter((d) => !assignments.some((a) => a.name === d.name));
 
   return (
     <div className="card">
@@ -135,52 +146,85 @@ function EventCard({ type, config, allDevices, onSave }: EventCardProps) {
           />
         </div>
 
-        {meta.hasVideoSeek && (
-          <div className="setting-item">
-            <div className="setting-info">
-              <h3>Video Seek Time</h3>
-              <p className="setting-description">Timestamp to jump to (MM:SS or HH:MM:SS)</p>
-            </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <h3>Video Seek Time</h3>
+            <p className="setting-description">Timestamp to jump to (MM:SS or HH:MM:SS)</p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <label className="toggle-switch" title={videoSeekEnabled ? "Disable seek" : "Enable seek"}>
+              <input
+                type="checkbox"
+                checked={videoSeekEnabled}
+                onChange={(e) => setVideoSeekEnabled(e.target.checked)}
+                disabled={saving}
+              />
+              <span className="toggle-slider"></span>
+            </label>
             <input
               type="text"
               placeholder="30:41"
               value={videoSeekTime}
               onChange={(e) => setVideoSeekTime(e.target.value)}
-              disabled={saving}
-              style={{ ...inputStyle, width: "6rem", fontFamily: "monospace" }}
+              disabled={saving || !videoSeekEnabled}
+              style={{ ...inputStyle, width: "6rem", fontFamily: "monospace", opacity: videoSeekEnabled ? 1 : 0.35 }}
             />
           </div>
-        )}
+        </div>
       </div>
 
       {/* WLED Devices Section */}
       <div style={{ marginTop: "1.25rem", borderTop: "1px solid #333", paddingTop: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-          <h3 style={{ margin: 0, fontSize: "1rem", color: "#ddd" }}>💡 WLED Devices</h3>
-          <span style={{
-            fontSize: "0.75rem",
-            padding: "0.2rem 0.5rem",
-            borderRadius: "4px",
-            background: "#242424",
-            border: "1px solid #444",
-            color: "#aaa",
-            fontFamily: "monospace",
-          }}>
-            {config.wled.effect}
-          </span>
-        </div>
+        <h3 style={{ margin: "0 0 0.75rem", fontSize: "1rem", color: "#ddd" }}>💡 WLED Devices</h3>
 
-        {assignedDevices.length === 0 ? (
+        {assignments.length === 0 ? (
           <p className="placeholder-text" style={{ margin: "0.5rem 0" }}>No devices assigned</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.75rem" }}>
-            {assignedDevices.map((name) => (
-              <div key={name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#242424", borderRadius: "6px", padding: "0.4rem 0.6rem", border: "1px solid #333" }}>
-                <span style={{ fontSize: "0.9rem" }}>💡 {name}</span>
-                <button
-                  onClick={() => handleRemoveDevice(name)}
+            {assignments.map((assignment) => (
+              <div
+                key={assignment.name}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  background: "#242424",
+                  borderRadius: "6px",
+                  padding: "0.4rem 0.6rem",
+                  border: "1px solid #333",
+                }}
+              >
+                <span style={{ fontSize: "0.9rem", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  💡 {assignment.name}
+                </span>
+                <select
+                  value={assignment.effect}
+                  onChange={(e) => handleChangeEffect(assignment.name, e.target.value)}
                   disabled={saving}
-                  style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: "1rem", padding: "0 0.2rem", lineHeight: 1 }}
+                  style={{
+                    background: "#1a1a1a",
+                    border: "1px solid #444",
+                    borderRadius: "4px",
+                    color: "#aaa",
+                    padding: "0.2rem 0.4rem",
+                    fontSize: "0.78rem",
+                    fontFamily: "monospace",
+                    maxWidth: "9rem",
+                    flexShrink: 0,
+                  }}
+                >
+                  {/* Keep current value even if not in library */}
+                  {!effectNames.includes(assignment.effect) && (
+                    <option value={assignment.effect}>{assignment.effect}</option>
+                  )}
+                  {effectNames.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handleRemoveDevice(assignment.name)}
+                  disabled={saving}
+                  style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: "1rem", padding: "0 0.2rem", lineHeight: 1, flexShrink: 0 }}
                   title="Remove device"
                 >
                   ×
@@ -233,15 +277,18 @@ function EventCard({ type, config, allDevices, onSave }: EventCardProps) {
 export function EventsConfig() {
   const [events, setEvents] = useState<Record<string, RuntimeEventConfig>>({});
   const [allDevices, setAllDevices] = useState<WLEDDevice[]>([]);
+  const [allEffects, setAllEffects] = useState<Record<string, StoredEffect>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getEvents(),
       getWLEDDevices().catch(() => ({ devices: [] as WLEDDevice[] })),
-    ]).then(([eventsData, wledData]) => {
+      getEffectLibrary().catch(() => ({ effects: {} as Record<string, StoredEffect> })),
+    ]).then(([eventsData, wledData, effectsData]) => {
       setEvents(eventsData.events);
       setAllDevices(wledData.devices);
+      setAllEffects(effectsData.effects);
     }).catch((err) => {
       console.error("Failed to load events:", err);
     }).finally(() => {
@@ -267,7 +314,7 @@ export function EventsConfig() {
       ) : (
         <div className="card-container">
           {Object.entries(events).map(([type, cfg]) => (
-            <EventCard key={type} type={type} config={cfg} allDevices={allDevices} onSave={handleSave} />
+            <EventCard key={type} type={type} config={cfg} allDevices={allDevices} allEffects={allEffects} onSave={handleSave} />
           ))}
         </div>
       )}

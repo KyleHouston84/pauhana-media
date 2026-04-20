@@ -3,13 +3,16 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     // Test file patterns - where to look for tests
-    include: ['src/**/*.{test,spec}.{js,ts}'],
+    include: [
+      'src/**/*.{test,spec}.{js,ts}',
+      'web/src/utils/**/*.{test,spec}.{js,ts}',
+    ],
 
     // Exclude patterns - don't test these
     exclude: [
       'node_modules',
+      'web/node_modules',
       'dist',
-      'web',
       'web-dist',
       '.git',
     ],

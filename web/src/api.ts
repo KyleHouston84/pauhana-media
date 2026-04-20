@@ -138,9 +138,13 @@ export async function setRandomEventsEnabled(enabled: boolean): Promise<RandomEv
 }
 
 // Event Configuration Functions
-export interface EventWLEDConfig {
-  deviceNames: string[];
+export interface EventWLEDDeviceAssignment {
+  name: string;
   effect: string;
+}
+
+export interface EventWLEDConfig {
+  devices: EventWLEDDeviceAssignment[];
 }
 
 export interface RuntimeEventConfig {
@@ -242,6 +246,54 @@ export async function renameWLEDDevice(ip: string, name: string): Promise<{ ok: 
     body: JSON.stringify({ name }),
   });
   if (!response.ok) throw new Error('Failed to rename device');
+  return response.json();
+}
+
+// Effect Library Functions
+export interface StoredEffect {
+  name: string;
+  state: Record<string, unknown>;
+  capturedFromIp?: string;
+  capturedAt: string;
+}
+
+export async function getEffectLibrary(): Promise<{ ok: boolean; effects: Record<string, StoredEffect> }> {
+  const response = await fetch(`${API_BASE}/effects`, {
+    headers: { 'X-API-Key': API_KEY },
+  });
+  if (!response.ok) throw new Error('Failed to fetch effect library');
+  return response.json();
+}
+
+export async function captureDeviceEffect(ip: string, name: string): Promise<{ ok: boolean; effect: StoredEffect }> {
+  const response = await fetch(`${API_BASE}/effects`, {
+    method: 'POST',
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ip, name }),
+  });
+  if (!response.ok) throw new Error('Failed to capture effect');
+  return response.json();
+}
+
+export async function updateEffectInLibrary(
+  oldName: string,
+  updates: { name?: string; ip?: string },
+): Promise<{ ok: boolean; effect: StoredEffect }> {
+  const response = await fetch(`${API_BASE}/effects/${encodeURIComponent(oldName)}`, {
+    method: 'PATCH',
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+  if (!response.ok) throw new Error('Failed to update effect');
+  return response.json();
+}
+
+export async function deleteEffectFromLibrary(name: string): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(`${API_BASE}/effects/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+    headers: { 'X-API-Key': API_KEY },
+  });
+  if (!response.ok) throw new Error('Failed to delete effect');
   return response.json();
 }
 

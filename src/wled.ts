@@ -1,6 +1,8 @@
 import axios from "axios";
 import { discoverWLED } from "./utils/discoverWLED.js";
 import { LIGHTING, RED } from "./json/wledStates.js";
+import { getEffect } from "./effectLibrary.js";
+import { getEventSettings } from "./eventSettings.js";
 import type {
   WLEDDevice,
   WLEDState,
@@ -91,20 +93,28 @@ export class PauHanaWLED {
     return true;
   }
 
-  // Trigger storm effect on all storm devices
+  // Trigger storm effect on all storm devices (per-device effect lookup)
   async triggerStorm(): Promise<void> {
     await this.saveSnapshot();
-    for (const device of this.zones.storm) {
-      await this.sendJSON(device, LIGHTING);
+    const assignments = getEventSettings().STORM.wled.devices;
+    for (const assignment of assignments) {
+      const device = this.zones.storm.find((d) => d.name === assignment.name);
+      if (!device) continue;
+      const effectState = (getEffect(assignment.effect)?.state ?? LIGHTING) as unknown as WLEDState;
+      await this.sendJSON(device, effectState);
     }
     console.log("WLED Storm triggered!");
   }
 
-  // Trigger volcano glow
+  // Trigger volcano glow (per-device effect lookup)
   async volcanoGlow(): Promise<void> {
     await this.saveSnapshot();
-    for (const device of this.zones.volcano) {
-      await this.sendJSON(device, RED);
+    const assignments = getEventSettings().ERUPTION.wled.devices;
+    for (const assignment of assignments) {
+      const device = this.zones.volcano.find((d) => d.name === assignment.name);
+      if (!device) continue;
+      const effectState = (getEffect(assignment.effect)?.state ?? RED) as unknown as WLEDState;
+      await this.sendJSON(device, effectState);
     }
     console.log("WLED Volcano glow triggered!");
   }

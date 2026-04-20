@@ -14,7 +14,7 @@ export async function startEruption(): Promise<void> {
 
   if (videoSeekTime) await seekVideo(videoSeekTime);
 
-  pauhanaWLED.assignZones({ volcano: getEventSettings().ERUPTION.wled.deviceNames });
+  pauhanaWLED.assignZones({ volcano: getEventSettings().ERUPTION.wled.devices.map((d) => d.name) });
 
   const snap = await snapshotSonos();
   const eventVolume = Math.max(snap.volume, volume);

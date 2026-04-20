@@ -2,9 +2,13 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-export interface EventWLEDConfig {
-  deviceNames: string[];
+export interface EventWLEDDeviceAssignment {
+  name: string;
   effect: string;
+}
+
+export interface EventWLEDConfig {
+  devices: EventWLEDDeviceAssignment[];
 }
 
 export interface RuntimeEventConfig {
@@ -21,19 +25,38 @@ const DEFAULTS: Record<string, RuntimeEventConfig> = {
     durationSec: 60,
     videoSeekTime: null,
     enabled: true,
-    wled: { deviceNames: ["WLED-Gledopto"], effect: "LIGHTING" },
+    wled: { devices: [{ name: "WLED-Gledopto", effect: "LIGHTING" }] },
   },
   ERUPTION: {
     volume: 15,
     durationSec: 86,
     videoSeekTime: "30:41",
     enabled: true,
-    wled: { deviceNames: ["WLED-Gledopto"], effect: "RED" },
+    wled: { devices: [{ name: "WLED-Gledopto", effect: "RED" }] },
   },
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SETTINGS_PATH = path.join(__dirname, "../event-settings.json");
+
+export function migrateWLED(wled: unknown): EventWLEDConfig {
+  if (wled && typeof wled === "object") {
+    const w = wled as Record<string, unknown>;
+    // Old format: { deviceNames: string[], effect: string }
+    if (Array.isArray(w.deviceNames)) {
+      return {
+        devices: (w.deviceNames as string[]).map((name) => ({
+          name,
+          effect: typeof w.effect === "string" ? w.effect : "LIGHTING",
+        })),
+      };
+    }
+    if (Array.isArray(w.devices)) {
+      return w as unknown as EventWLEDConfig;
+    }
+  }
+  return { devices: [] };
+}
 
 let settings: Record<string, RuntimeEventConfig> = structuredClone(DEFAULTS);
 
@@ -44,7 +67,7 @@ try {
     settings[type] = {
       ...defaults,
       ...(saved[type] ?? {}),
-      wled: { ...defaults.wled, ...(saved[type]?.wled ?? {}) },
+      wled: migrateWLED((saved[type] as Record<string, unknown>)?.wled ?? defaults.wled),
     };
   }
 } catch {
@@ -62,7 +85,7 @@ export function updateEventSetting(
   settings[type] = {
     ...settings[type],
     ...patch,
-    wled: { ...settings[type].wled, ...(patch.wled ?? {}) },
+    wled: patch.wled ?? settings[type].wled,
   };
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), "utf8");
   return settings[type];

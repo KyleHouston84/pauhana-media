@@ -11,6 +11,7 @@ import { isRandomEventsEnabled, enableRandomEvents, disableRandomEvents, getNext
 import { pauhanaWLED } from "./wled.js";
 import { getEventSettings, updateEventSetting } from "./eventSettings.js";
 import type { RuntimeEventConfig } from "./eventSettings.js";
+import { getEffects, saveEffect, updateEffect, deleteEffect } from "./effectLibrary.js";
 
 const app = express();
 const API_KEY = config.apiKey;
@@ -29,7 +30,7 @@ app.use(express.json());
 // Custom middleware function to check headers
 app.use((req: Request, res: Response, next: NextFunction): void => {
   // Only check API key for protected API routes
-  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs") || req.path.startsWith("/video") || req.path.startsWith("/settings") || req.path.startsWith("/wled") || req.path.startsWith("/events");
+  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs") || req.path.startsWith("/video") || req.path.startsWith("/settings") || req.path.startsWith("/wled") || req.path.startsWith("/events") || req.path.startsWith("/effects");
 
   if (isProtectedRoute && req.headers["x-api-key"] !== API_KEY) {
     res.status(403).json({ ok: false });
@@ -311,11 +312,10 @@ app.post("/wled/devices/:ip/rename", async (req: Request, res: Response): Promis
     // Cascade rename into any event WLED device assignments
     const events = getEventSettings();
     for (const [type, cfg] of Object.entries(events)) {
-      if (cfg.wled.deviceNames.includes(oldName)) {
+      if (cfg.wled.devices.some((d) => d.name === oldName)) {
         updateEventSetting(type, {
           wled: {
-            ...cfg.wled,
-            deviceNames: cfg.wled.deviceNames.map((n) => (n === oldName ? name : n)),
+            devices: cfg.wled.devices.map((d) => (d.name === oldName ? { ...d, name } : d)),
           },
         });
       }
@@ -372,21 +372,104 @@ app.patch("/events/:type", (req: Request, res: Response): void => {
     patch.enabled = enabled;
   }
   if (wled !== undefined) {
-    if (wled.deviceNames !== undefined) {
-      if (!Array.isArray(wled.deviceNames) || !wled.deviceNames.every((n) => typeof n === "string")) {
-        res.status(400).json({ ok: false, message: "wled.deviceNames must be an array of strings" });
+    if (wled.devices !== undefined) {
+      if (
+        !Array.isArray(wled.devices) ||
+        !wled.devices.every(
+          (d) => d && typeof d === "object" && typeof d.name === "string" && typeof d.effect === "string",
+        )
+      ) {
+        res.status(400).json({ ok: false, message: "wled.devices must be an array of {name, effect}" });
         return;
       }
-    }
-    if (wled.effect !== undefined && typeof wled.effect !== "string") {
-      res.status(400).json({ ok: false, message: "wled.effect must be a string" });
-      return;
     }
     patch.wled = wled;
   }
 
   const updated = updateEventSetting(type as string, patch);
   res.json({ ok: true, config: updated });
+});
+
+// Effect library endpoints
+app.get("/effects", (_req: Request, res: Response): void => {
+  res.json({ ok: true, effects: getEffects() });
+});
+
+app.post("/effects", async (req: Request, res: Response): Promise<void> => {
+  const { name, ip } = req.body as { name?: string; ip?: string };
+  if (!name || typeof name !== "string" || !name.trim()) {
+    res.status(400).json({ ok: false, message: "Missing or invalid 'name'" });
+    return;
+  }
+  if (!ip || typeof ip !== "string") {
+    res.status(400).json({ ok: false, message: "Missing or invalid 'ip'" });
+    return;
+  }
+  try {
+    const response = await fetch(`http://${ip}/json/state`, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) {
+      res.status(502).json({ ok: false, message: "Device returned an error" });
+      return;
+    }
+    const state = await response.json() as Record<string, unknown>;
+    const effect = saveEffect(name.trim(), state, ip);
+    res.json({ ok: true, effect });
+  } catch (err) {
+    res.status(503).json({ ok: false, message: "Device unreachable", error: String(err) });
+  }
+});
+
+app.patch("/effects/:name", async (req: Request, res: Response): Promise<void> => {
+  const oldName = req.params.name as string;
+  const { name, ip } = req.body as { name?: string; ip?: string };
+  if (!name && !ip) {
+    res.status(400).json({ ok: false, message: "Provide 'name' to rename or 'ip' to re-capture (or both)" });
+    return;
+  }
+  let newState: Record<string, unknown> | undefined;
+  if (ip) {
+    try {
+      const response = await fetch(`http://${ip}/json/state`, { signal: AbortSignal.timeout(3000) });
+      if (!response.ok) {
+        res.status(502).json({ ok: false, message: "Device returned an error" });
+        return;
+      }
+      newState = await response.json() as Record<string, unknown>;
+    } catch (err) {
+      res.status(503).json({ ok: false, message: "Device unreachable", error: String(err) });
+      return;
+    }
+  }
+  const updated = updateEffect(oldName, { name, state: newState, capturedFromIp: ip });
+  if (!updated) {
+    res.status(404).json({ ok: false, message: `Effect "${oldName}" not found` });
+    return;
+  }
+  // Cascade rename into event device assignments
+  if (name && name.trim() !== oldName) {
+    const newName = name.trim();
+    const events = getEventSettings();
+    for (const [type, cfg] of Object.entries(events)) {
+      if (cfg.wled.devices.some((d) => d.effect === oldName)) {
+        updateEventSetting(type, {
+          wled: {
+            devices: cfg.wled.devices.map((d) => (d.effect === oldName ? { ...d, effect: newName } : d)),
+          },
+        });
+      }
+    }
+  }
+  res.json({ ok: true, effect: updated });
+});
+
+app.delete("/effects/:name", (req: Request, res: Response): void => {
+  const name = req.params.name as string;
+  const deleted = deleteEffect(name);
+  if (!deleted) {
+    res.status(404).json({ ok: false, message: `Effect "${name}" not found` });
+    return;
+  }
+  res.json({ ok: true, message: `Deleted effect "${name}"` });
 });
 
 // Catch-all route for React Router - must be last!

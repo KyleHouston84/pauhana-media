@@ -2,6 +2,7 @@ import { sonos, snapshotSonos, fadeVolume, playEffect } from "./sonos.js";
 import { EVENTS } from "./common/constants.js";
 import { sleep } from "./common/helpers.js";
 import { pauhanaWLED } from "./wled.js";
+import { seekVideo } from "./video.js";
 import { getEventSettings } from "./eventSettings.js";
 
 // Hue lightning effects commented out in original code (lines 30-32)
@@ -9,10 +10,13 @@ import { getEventSettings } from "./eventSettings.js";
 // const ALL_LIGHTS = [1, 2, 3, 4];
 
 export async function summonStorm(): Promise<void> {
-  pauhanaWLED.assignZones({ storm: getEventSettings().STORM.wled.deviceNames });
+  const { volume, durationSec, videoSeekTime } = getEventSettings().STORM;
+
+  if (videoSeekTime) await seekVideo(videoSeekTime);
+
+  pauhanaWLED.assignZones({ storm: getEventSettings().STORM.wled.devices.map((d) => d.name) });
 
   const snap = await snapshotSonos();
-  const { volume, durationSec } = getEventSettings().STORM;
   const eventVolume = Math.max(snap.volume, volume);
 
   const { uri } = EVENTS.STORM;
