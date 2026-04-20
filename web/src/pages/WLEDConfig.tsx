@@ -5,6 +5,7 @@ import {
   discoverWLEDDevices,
   getWLEDDeviceInfo,
   renameWLEDDevice,
+  setWLEDPower,
 } from "../api";
 import type { WLEDDeviceInfo } from "../api";
 import "../App.css";
@@ -25,12 +26,14 @@ function brightnessPercent(bri?: number): string {
 interface DeviceCardProps {
   device: WLEDDeviceInfo;
   onRename: (ip: string, name: string) => Promise<void>;
+  onPowerChange: (ip: string, on: boolean) => Promise<void>;
 }
 
-function DeviceCard({ device, onRename }: DeviceCardProps) {
+function DeviceCard({ device, onRename, onPowerChange }: DeviceCardProps) {
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState(device.name);
   const [saving, setSaving] = useState(false);
+  const [powerToggling, setPowerToggling] = useState(false);
   const [message, setMessage] = useState("");
 
   const showMessage = (msg: string) => {
@@ -53,6 +56,18 @@ function DeviceCard({ device, onRename }: DeviceCardProps) {
       setNameInput(device.name);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePowerToggle = async () => {
+    if (device.on === undefined) return;
+    setPowerToggling(true);
+    try {
+      await onPowerChange(device.ip, !device.on);
+    } catch {
+      showMessage("Failed to toggle power");
+    } finally {
+      setPowerToggling(false);
     }
   };
 
@@ -131,10 +146,20 @@ function DeviceCard({ device, onRename }: DeviceCardProps) {
           <span className="status-value" style={{ fontFamily: "monospace" }}>{device.ip}</span>
         </div>
         <div className="status-item">
-          <span className="status-label">Status</span>
-          <span className="status-value" style={{ color: device.on ? "#4ade80" : "#888" }}>
-            {device.on === undefined ? "—" : device.on ? "On" : "Off"}
-          </span>
+          <span className="status-label">Power</span>
+          {device.on === undefined ? (
+            <span className="status-value" style={{ color: "#888" }}>—</span>
+          ) : (
+            <label className="toggle-switch" title={device.on ? "Turn off" : "Turn on"} style={{ opacity: powerToggling ? 0.5 : 1 }}>
+              <input
+                type="checkbox"
+                checked={device.on}
+                onChange={handlePowerToggle}
+                disabled={powerToggling}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          )}
         </div>
         <div className="status-item">
           <span className="status-label">Brightness</span>
@@ -206,9 +231,12 @@ export function WLEDConfig() {
 
   const handleRename = async (ip: string, name: string) => {
     await renameWLEDDevice(ip, name);
-    setDevices((prev) =>
-      prev.map((d) => (d.ip === ip ? { ...d, name } : d))
-    );
+    setDevices((prev) => prev.map((d) => (d.ip === ip ? { ...d, name } : d)));
+  };
+
+  const handlePowerChange = async (ip: string, on: boolean) => {
+    await setWLEDPower(ip, on);
+    setDevices((prev) => prev.map((d) => (d.ip === ip ? { ...d, on } : d)));
   };
 
   return (
@@ -240,7 +268,7 @@ export function WLEDConfig() {
       ) : (
         <div className="card-container">
           {devices.map((device) => (
-            <DeviceCard key={device.ip} device={device} onRename={handleRename} />
+            <DeviceCard key={device.ip} device={device} onRename={handleRename} onPowerChange={handlePowerChange} />
           ))}
         </div>
       )}

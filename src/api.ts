@@ -9,6 +9,8 @@ import { config } from "./config.js";
 import { seekVideo, pauseVideo, playVideo, getVideoPosition } from "./video.js";
 import { isRandomEventsEnabled, enableRandomEvents, disableRandomEvents, getNextEventTime } from "./randomEventScheduler.js";
 import { pauhanaWLED } from "./wled.js";
+import { getEventSettings, updateEventSetting } from "./eventSettings.js";
+import type { RuntimeEventConfig } from "./eventSettings.js";
 
 const app = express();
 const API_KEY = config.apiKey;
@@ -27,7 +29,7 @@ app.use(express.json());
 // Custom middleware function to check headers
 app.use((req: Request, res: Response, next: NextFunction): void => {
   // Only check API key for protected API routes
-  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs") || req.path.startsWith("/video") || req.path.startsWith("/settings") || req.path.startsWith("/wled");
+  const isProtectedRoute = req.path.startsWith("/storm") || req.path.startsWith("/erupt") || req.path.startsWith("/logs") || req.path.startsWith("/video") || req.path.startsWith("/settings") || req.path.startsWith("/wled") || req.path.startsWith("/events");
 
   if (isProtectedRoute && req.headers["x-api-key"] !== API_KEY) {
     res.status(403).json({ ok: false });
@@ -224,6 +226,35 @@ app.post("/wled/discover", async (_req: Request, res: Response): Promise<void> =
   }
 });
 
+app.post("/wled/devices/:ip/power", async (req: Request, res: Response): Promise<void> => {
+  const { ip } = req.params;
+  const knownDevice = pauhanaWLED.devices.find((d) => d.ip === ip);
+  if (!knownDevice) {
+    res.status(404).json({ ok: false, message: "Device not found" });
+    return;
+  }
+  const { on } = req.body;
+  if (typeof on !== "boolean") {
+    res.status(400).json({ ok: false, message: "'on' must be a boolean" });
+    return;
+  }
+  try {
+    const response = await fetch(`http://${ip}/json/state`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ on }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!response.ok) {
+      res.status(500).json({ ok: false, message: "Device rejected command" });
+      return;
+    }
+    res.json({ ok: true, on, message: on ? "Turned on" : "Turned off" });
+  } catch (err) {
+    res.status(503).json({ ok: false, message: "Device unreachable", error: String(err) });
+  }
+});
+
 app.get("/wled/devices/:ip/info", async (req: Request, res: Response): Promise<void> => {
   const { ip } = req.params;
   const knownDevice = pauhanaWLED.devices.find((d) => d.ip === ip);
@@ -274,11 +305,88 @@ app.post("/wled/devices/:ip/rename", async (req: Request, res: Response): Promis
       res.status(500).json({ ok: false, message: "Device rejected rename" });
       return;
     }
+    const oldName = device.name;
     device.name = name;
+
+    // Cascade rename into any event WLED device assignments
+    const events = getEventSettings();
+    for (const [type, cfg] of Object.entries(events)) {
+      if (cfg.wled.deviceNames.includes(oldName)) {
+        updateEventSetting(type, {
+          wled: {
+            ...cfg.wled,
+            deviceNames: cfg.wled.deviceNames.map((n) => (n === oldName ? name : n)),
+          },
+        });
+      }
+    }
+
     res.json({ ok: true, message: `Renamed to "${name}"` });
   } catch (err) {
     res.status(503).json({ ok: false, message: "Device unreachable", error: String(err) });
   }
+});
+
+// Event configuration endpoints
+app.get("/events", (_req: Request, res: Response): void => {
+  res.json({ ok: true, events: getEventSettings() });
+});
+
+app.patch("/events/:type", (req: Request, res: Response): void => {
+  const type = req.params.type as string;
+  const validTypes = ["STORM", "ERUPTION"];
+  if (!validTypes.includes(type)) {
+    res.status(400).json({ ok: false, message: `Unknown event type: ${type}` });
+    return;
+  }
+
+  const { volume, durationSec, videoSeekTime, enabled, wled } = req.body as Partial<RuntimeEventConfig>;
+  const patch: Partial<RuntimeEventConfig> = {};
+
+  if (volume !== undefined) {
+    if (typeof volume !== "number" || volume < 0 || volume > 100) {
+      res.status(400).json({ ok: false, message: "volume must be a number 0–100" });
+      return;
+    }
+    patch.volume = volume;
+  }
+  if (durationSec !== undefined) {
+    if (typeof durationSec !== "number" || durationSec < 1) {
+      res.status(400).json({ ok: false, message: "durationSec must be a positive number" });
+      return;
+    }
+    patch.durationSec = durationSec;
+  }
+  if (videoSeekTime !== undefined) {
+    if (videoSeekTime !== null && typeof videoSeekTime !== "string") {
+      res.status(400).json({ ok: false, message: "videoSeekTime must be a string or null" });
+      return;
+    }
+    patch.videoSeekTime = videoSeekTime;
+  }
+  if (enabled !== undefined) {
+    if (typeof enabled !== "boolean") {
+      res.status(400).json({ ok: false, message: "enabled must be a boolean" });
+      return;
+    }
+    patch.enabled = enabled;
+  }
+  if (wled !== undefined) {
+    if (wled.deviceNames !== undefined) {
+      if (!Array.isArray(wled.deviceNames) || !wled.deviceNames.every((n) => typeof n === "string")) {
+        res.status(400).json({ ok: false, message: "wled.deviceNames must be an array of strings" });
+        return;
+      }
+    }
+    if (wled.effect !== undefined && typeof wled.effect !== "string") {
+      res.status(400).json({ ok: false, message: "wled.effect must be a string" });
+      return;
+    }
+    patch.wled = wled;
+  }
+
+  const updated = updateEventSetting(type as string, patch);
+  res.json({ ok: true, config: updated });
 });
 
 // Catch-all route for React Router - must be last!

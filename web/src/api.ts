@@ -137,6 +137,41 @@ export async function setRandomEventsEnabled(enabled: boolean): Promise<RandomEv
   return response.json();
 }
 
+// Event Configuration Functions
+export interface EventWLEDConfig {
+  deviceNames: string[];
+  effect: string;
+}
+
+export interface RuntimeEventConfig {
+  volume: number;
+  durationSec: number;
+  videoSeekTime: string | null;
+  enabled: boolean;
+  wled: EventWLEDConfig;
+}
+
+export async function getEvents(): Promise<{ ok: boolean; events: Record<string, RuntimeEventConfig> }> {
+  const response = await fetch(`${API_BASE}/events`, {
+    headers: { 'X-API-Key': API_KEY },
+  });
+  if (!response.ok) throw new Error('Failed to fetch events');
+  return response.json();
+}
+
+export async function updateEvent(
+  type: string,
+  patch: Partial<RuntimeEventConfig>,
+): Promise<{ ok: boolean; config: RuntimeEventConfig }> {
+  const response = await fetch(`${API_BASE}/events/${type}`, {
+    method: 'PATCH',
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  if (!response.ok) throw new Error(`Failed to update event ${type}`);
+  return response.json();
+}
+
 // WLED Functions
 export interface WLEDDevice {
   ip: string;
@@ -188,6 +223,16 @@ export async function getWLEDDeviceInfo(ip: string): Promise<WLEDDeviceInfo> {
   if (!response.ok) throw new Error(`Failed to fetch info for ${ip}`);
   const data = await response.json();
   return data.info as WLEDDeviceInfo;
+}
+
+export async function setWLEDPower(ip: string, on: boolean): Promise<{ ok: boolean; on: boolean; message: string }> {
+  const response = await fetch(`${API_BASE}/wled/devices/${ip}/power`, {
+    method: 'POST',
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ on }),
+  });
+  if (!response.ok) throw new Error('Failed to set WLED power');
+  return response.json();
 }
 
 export async function renameWLEDDevice(ip: string, name: string): Promise<{ ok: boolean; message: string }> {

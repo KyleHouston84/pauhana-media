@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Home } from "./pages/Home";
 import { Admin } from "./pages/Admin";
 import { WLEDConfig } from "./pages/WLEDConfig";
+import { EventsConfig } from "./pages/EventsConfig";
 import "./App.css";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/wled" element={<WLEDConfig />} />
+          <Route path="/admin/events" element={<EventsConfig />} />
         </Routes>
 
         <footer className="footer">

@@ -3,6 +3,7 @@ import { startEruption } from "./eruption.js";
 import { EVENTS } from "./common/constants.js";
 import { pauhanaWLED } from "./wled.js";
 import { resetScheduler } from "./randomEventScheduler.js";
+import { getEventSettings } from "./eventSettings.js";
 import type { EventType } from "./types/events.js";
 
 let eventHappening = false;
@@ -24,6 +25,11 @@ export async function triggerEvent(type: EventType, automatic = false): Promise<
   // Validate event type exists
   if (!EVENTS[type]) {
     console.log(`🚨 Unknown event type: ${type}`);
+    return false;
+  }
+
+  if (!getEventSettings()[type]?.enabled) {
+    console.log(`⏭️ Event ${type} is disabled — skipping`);
     return false;
   }
 

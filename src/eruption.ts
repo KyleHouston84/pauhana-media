@@ -1,21 +1,23 @@
 import { sonos, snapshotSonos, fadeVolume, playEffect } from "./sonos.js";
-import { ERUPTION_VOLUME, EVENTS } from "./common/constants.js";
+import { EVENTS } from "./common/constants.js";
 import { sleep } from "./common/helpers.js";
 import { pauhanaWLED } from "./wled.js";
 import { seekVideo } from "./video.js";
+import { getEventSettings } from "./eventSettings.js";
 
 // Hue lightning effects commented out in original code (lines 30-32)
 // import { setLights } from "./hue.js";
 // const ALL_LIGHTS = [1, 2, 3, 4];
 
 export async function startEruption(): Promise<void> {
-  // Sync video to eruption scene (30:41 into the video)
-  await seekVideo("30:41");
+  const { volume, durationSec, videoSeekTime } = getEventSettings().ERUPTION;
 
-  pauhanaWLED.assignZones({ volcano: ["WLED-Gledopto"] });
+  if (videoSeekTime) await seekVideo(videoSeekTime);
+
+  pauhanaWLED.assignZones({ volcano: getEventSettings().ERUPTION.wled.deviceNames });
 
   const snap = await snapshotSonos();
-  const eventVolume = Math.max(snap.volume, ERUPTION_VOLUME);
+  const eventVolume = Math.max(snap.volume, volume);
 
   const { uri } = EVENTS.ERUPTION;
   await playEffect(uri, snap, eventVolume);
@@ -25,8 +27,7 @@ export async function startEruption(): Promise<void> {
   // await sleep(3000);
   // await lightningStrike();
 
-  await sleep(86000);
-  // await sleep(10000);
+  await sleep(durationSec * 1000);
   await sonos.selectQueue();
   if (snap.track?.uri) {
     await sonos.selectTrack(snap.track.queuePosition);
