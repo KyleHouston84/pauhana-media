@@ -58,26 +58,21 @@ async function sendMpvCommand(command: string[]): Promise<void> {
  * Seek to a specific timestamp in the video
  * @param timestamp - Time in format "MM:SS" or "HH:MM:SS" or seconds
  */
+/**
+ * Parse a timestamp string ("MM:SS" or "HH:MM:SS") or number (seconds) to seconds.
+ */
+export function parseTimestamp(timestamp: string | number): number {
+  if (typeof timestamp === "number") return timestamp;
+  const parts = timestamp.split(":").map(Number);
+  if (parts.some(isNaN)) throw new Error(`Invalid timestamp format: ${timestamp}`);
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  throw new Error(`Invalid timestamp format: ${timestamp}`);
+}
+
 export async function seekVideo(timestamp: string | number): Promise<void> {
   try {
-    let seconds: number;
-
-    if (typeof timestamp === "string") {
-      // Parse MM:SS or HH:MM:SS format
-      const parts = timestamp.split(":").map(Number);
-      if (parts.length === 2) {
-        // MM:SS
-        seconds = parts[0] * 60 + parts[1];
-      } else if (parts.length === 3) {
-        // HH:MM:SS
-        seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-      } else {
-        throw new Error(`Invalid timestamp format: ${timestamp}`);
-      }
-    } else {
-      seconds = timestamp;
-    }
-
+    const seconds = parseTimestamp(timestamp);
     console.log(`🎬 Seeking video to ${timestamp} (${seconds}s)`);
     await sendMpvCommand(["seek", seconds.toString(), "absolute"]);
   } catch (err) {
