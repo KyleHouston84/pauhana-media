@@ -1,4 +1,6 @@
 import axios from "axios";
+import { readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 import { discoverWLED } from "./utils/discoverWLED.js";
 import { LIGHTING, RED } from "./json/wledStates.js";
 import { getEffect } from "./effectLibrary.js";
@@ -9,6 +11,24 @@ import type {
   WLEDZoneType,
   WLEDZones,
 } from "./types/wled.js";
+
+const DEVICE_STORE_PATH = join(process.cwd(), "wled-devices.json");
+
+function loadStoredDevices(): WLEDDevice[] {
+  try {
+    return JSON.parse(readFileSync(DEVICE_STORE_PATH, "utf8")) as WLEDDevice[];
+  } catch {
+    return [];
+  }
+}
+
+function saveDevices(devices: WLEDDevice[]): void {
+  try {
+    writeFileSync(DEVICE_STORE_PATH, JSON.stringify(devices, null, 2));
+  } catch (err) {
+    console.error("Failed to save WLED device list:", err);
+  }
+}
 
 interface WLEDSnapshotEntry {
   device: WLEDDevice;
@@ -21,22 +41,32 @@ export class PauHanaWLED {
   snapshot: Record<string, WLEDSnapshotEntry>;
 
   constructor() {
-    this.devices = []; // all discovered devices
+    this.devices = loadStoredDevices(); // seed from last known device list
     this.zones = {
       volcano: [],
       storm: [],
       ambient: [],
     };
-    this.snapshot = {}; // snapshot of the current state by ip
+    this.snapshot = {};
   }
 
   async discover(): Promise<WLEDDevice[]> {
-    this.devices = await discoverWLED();
+    const fresh = await discoverWLED();
+
+    // Merge: fresh discovery takes precedence by name; any stored device not
+    // found this scan is kept as a fallback (handles transient WiFi blips).
+    const freshNames = new Set(fresh.map((d) => d.name));
+    const stored = loadStoredDevices();
+    const fallback = stored.filter((d) => !freshNames.has(d.name));
+    this.devices = [...fresh, ...fallback];
+
     if (this.devices.length > 0) {
-      console.log("Discovered WLEDs:", this.devices);
+      console.log("WLED devices:", this.devices);
     } else {
-      console.log("Unable to locate WLEDs", this.devices);
+      console.log("No WLED devices found");
     }
+
+    saveDevices(this.devices);
     return this.devices;
   }
 
@@ -68,9 +98,9 @@ export class PauHanaWLED {
   // Send json command to a single WLED device
   async sendJSON(device: WLEDDevice, json: WLEDState): Promise<void> {
     try {
-      await axios.post<WLEDState>(`http://${device.ip}/json/state`, json);
+      await axios.post<WLEDState>(`http://${device.ip}/json/state`, json, { timeout: 3000 });
     } catch (error) {
-      console.error("Failed to send JSON", error);
+      console.error(`Failed to send JSON to ${device.name} (${device.ip}):`, error);
     }
   }
 
@@ -79,9 +109,7 @@ export class PauHanaWLED {
       try {
         const res = await axios.get<WLEDState>(
           `http://${device.ip}/json/state`,
-          {
-            timeout: 200,
-          },
+          { timeout: 3000 },
         );
         if (res.data) {
           this.snapshot[device.ip] = { device: device, state: res.data };

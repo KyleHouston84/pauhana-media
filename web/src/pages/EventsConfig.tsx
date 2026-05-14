@@ -9,17 +9,6 @@ const EVENT_META: Record<string, { emoji: string; label: string }> = {
   ERUPTION: { emoji: "🌋", label: "Eruption" },
 };
 
-const inputStyle: React.CSSProperties = {
-  width: "5rem",
-  background: "#242424",
-  border: "1px solid #444",
-  borderRadius: "6px",
-  color: "#fff",
-  padding: "0.4rem 0.6rem",
-  fontSize: "1rem",
-  textAlign: "center",
-};
-
 interface EventCardProps {
   type: string;
   config: RuntimeEventConfig;
@@ -99,8 +88,8 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
 
   return (
     <div className="card">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", borderBottom: "2px solid #667eea", paddingBottom: "0.5rem" }}>
-        <h2 style={{ margin: 0, fontSize: "1.4rem", border: "none", paddingBottom: 0 }}>
+      <div className="event-card-header">
+        <h2 className="event-card-title">
           {meta.emoji} {meta.label}
         </h2>
         <label className="toggle-switch" title={enabled ? "Disable event" : "Enable event"}>
@@ -127,7 +116,7 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
             value={volume}
             onChange={(e) => setVolume(e.target.value)}
             disabled={saving}
-            style={inputStyle}
+            className="number-input"
           />
         </div>
 
@@ -142,7 +131,7 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
             value={durationSec}
             onChange={(e) => setDurationSec(e.target.value)}
             disabled={saving}
-            style={inputStyle}
+            className="number-input"
           />
         </div>
 
@@ -151,7 +140,7 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
             <h3>Video Seek Time</h3>
             <p className="setting-description">Timestamp to jump to (MM:SS or HH:MM:SS)</p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div className="seek-time-row">
             <label className="toggle-switch" title={videoSeekEnabled ? "Disable seek" : "Enable seek"}>
               <input
                 type="checkbox"
@@ -167,53 +156,28 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
               value={videoSeekTime}
               onChange={(e) => setVideoSeekTime(e.target.value)}
               disabled={saving || !videoSeekEnabled}
-              style={{ ...inputStyle, width: "6rem", fontFamily: "monospace", opacity: videoSeekEnabled ? 1 : 0.35 }}
+              className={`number-input seek-time-input${videoSeekEnabled ? "" : " seek-time-input--dimmed"}`}
             />
           </div>
         </div>
       </div>
 
-      {/* WLED Devices Section */}
-      <div style={{ marginTop: "1.25rem", borderTop: "1px solid #333", paddingTop: "1rem" }}>
-        <h3 style={{ margin: "0 0 0.75rem", fontSize: "1rem", color: "#ddd" }}>💡 WLED Devices</h3>
+      <div className="wled-section">
+        <h3 className="wled-section-title">💡 WLED Devices</h3>
 
         {assignments.length === 0 ? (
-          <p className="placeholder-text" style={{ margin: "0.5rem 0" }}>No devices assigned</p>
+          <p className="placeholder-text">No devices assigned</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.75rem" }}>
+          <div className="assignment-list">
             {assignments.map((assignment) => (
-              <div
-                key={assignment.name}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  background: "#242424",
-                  borderRadius: "6px",
-                  padding: "0.4rem 0.6rem",
-                  border: "1px solid #333",
-                }}
-              >
-                <span style={{ fontSize: "0.9rem", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  💡 {assignment.name}
-                </span>
+              <div key={assignment.name} className="assignment-item">
+                <span className="assignment-name">💡 {assignment.name}</span>
                 <select
                   value={assignment.effect}
                   onChange={(e) => handleChangeEffect(assignment.name, e.target.value)}
                   disabled={saving}
-                  style={{
-                    background: "#1a1a1a",
-                    border: "1px solid #444",
-                    borderRadius: "4px",
-                    color: "#aaa",
-                    padding: "0.2rem 0.4rem",
-                    fontSize: "0.78rem",
-                    fontFamily: "monospace",
-                    maxWidth: "9rem",
-                    flexShrink: 0,
-                  }}
+                  className="assignment-select"
                 >
-                  {/* Keep current value even if not in library */}
                   {!effectNames.includes(assignment.effect) && (
                     <option value={assignment.effect}>{assignment.effect}</option>
                   )}
@@ -224,7 +188,7 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
                 <button
                   onClick={() => handleRemoveDevice(assignment.name)}
                   disabled={saving}
-                  style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: "1rem", padding: "0 0.2rem", lineHeight: 1, flexShrink: 0 }}
+                  className="assignment-remove"
                   title="Remove device"
                 >
                   ×
@@ -239,16 +203,7 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
             defaultValue=""
             onChange={(e) => { handleAddDevice(e.target.value); e.target.value = ""; }}
             disabled={saving}
-            style={{
-              width: "100%",
-              background: "#242424",
-              border: "1px solid #444",
-              borderRadius: "6px",
-              color: "#aaa",
-              padding: "0.4rem 0.6rem",
-              fontSize: "0.9rem",
-              cursor: "pointer",
-            }}
+            className="add-device-select"
           >
             <option value="" disabled>+ Add device…</option>
             {unassignedDevices.map((d) => (
@@ -259,17 +214,14 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
       </div>
 
       <button
-        className="trigger-button"
+        className="trigger-button btn-full"
         onClick={handleSave}
         disabled={saving}
-        style={{ width: "100%", marginTop: "1rem" }}
       >
         {saving ? "Saving…" : "💾 Save"}
       </button>
 
-      {message && (
-        <div className="warning-message" style={{ marginTop: "1rem" }}>{message}</div>
-      )}
+      {message && <div className="warning-message">{message}</div>}
     </div>
   );
 }
@@ -303,8 +255,8 @@ export function EventsConfig() {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem" }}>
-        <Link to="/admin" style={{ color: "#667eea", textDecoration: "none", fontSize: "0.95rem" }}>
+      <div className="page-toolbar">
+        <Link to="/admin" className="page-back-link">
           ← Back to Admin
         </Link>
       </div>

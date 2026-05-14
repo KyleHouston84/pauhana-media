@@ -22,19 +22,19 @@ export async function startEruption(): Promise<void> {
   const { uri } = EVENTS.ERUPTION;
   await playEffect(uri, snap, eventVolume);
 
-  pauhanaWLED.volcanoGlow();
-  // await lightningStrike();
-  // await sleep(3000);
-  // await lightningStrike();
+  await pauhanaWLED.volcanoGlow();
 
-  await sleep(durationSec * 1000);
-  await sonos.selectQueue();
-  if (snap.track?.uri) {
-    await sonos.selectTrack(snap.track.queuePosition);
-    await sonos.seek(snap.track.position);
+  try {
+    await sleep(durationSec * 1000);
+    await sonos.selectQueue();
+    if (snap.track?.uri) {
+      await sonos.selectTrack(snap.track.queuePosition);
+      await sonos.seek(snap.track.position);
+    }
+  } finally {
+    await pauhanaWLED.reset();
   }
 
-  await pauhanaWLED.reset();
   await sonos.play();
   await fadeVolume(eventVolume, snap.volume, 3000);
 }

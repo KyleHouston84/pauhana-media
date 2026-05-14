@@ -107,56 +107,37 @@ export function EffectLibrarySection({ devices }: EffectLibrarySectionProps) {
   const effectList = Object.values(effects);
 
   return (
-    <div className="card" style={{ marginTop: "2rem" }}>
-      <h2 style={{ margin: "0 0 1rem 0", fontSize: "1.3rem", borderBottom: "2px solid #667eea", paddingBottom: "0.5rem" }}>
-        ✨ Effect Library
-      </h2>
+    <div className="card effect-library">
+      <h2>✨ Effect Library</h2>
 
       {loading ? (
         <p className="placeholder-text">Loading effects…</p>
       ) : effectList.length === 0 ? (
-        <p className="placeholder-text" style={{ margin: "0.5rem 0 1rem" }}>
+        <p className="placeholder-text effect-placeholder">
           No effects saved yet. Configure an effect in WLED, then capture it below.
         </p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1.25rem" }}>
+        <div className="effect-list">
           {effectList.map((effect) => (
             <div key={effect.name}>
               {editingName === effect.name ? (
-                <div style={{ background: "#1a1a1a", border: "1px solid #667eea", borderRadius: "8px", padding: "0.75rem" }}>
-                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
+                <div className="effect-edit-form">
+                  <div className="effect-form-row">
                     <input
                       autoFocus
                       value={editNameInput}
                       onChange={(e) => setEditNameInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") handleEditSave(); if (e.key === "Escape") setEditingName(null); }}
                       disabled={editSaving}
-                      style={{
-                        flex: 1,
-                        minWidth: "8rem",
-                        background: "#242424",
-                        border: "1px solid #555",
-                        borderRadius: "6px",
-                        color: "#fff",
-                        padding: "0.35rem 0.5rem",
-                        fontSize: "0.9rem",
-                      }}
+                      className="effect-form-input"
                     />
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+                  <div className="effect-form-row">
                     <select
                       value={editIp}
                       onChange={(e) => setEditIp(e.target.value)}
                       disabled={editSaving || devices.length === 0}
-                      style={{
-                        flex: 1,
-                        background: "#242424",
-                        border: "1px solid #444",
-                        borderRadius: "6px",
-                        color: editIp ? "#fff" : "#666",
-                        padding: "0.35rem 0.5rem",
-                        fontSize: "0.85rem",
-                      }}
+                      className={`effect-form-select${editIp ? "" : " effect-form-select--empty"}`}
                     >
                       <option value="">Re-capture from device (optional)</option>
                       {devices.map((d) => (
@@ -164,7 +145,7 @@ export function EffectLibrarySection({ devices }: EffectLibrarySectionProps) {
                       ))}
                     </select>
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <div className="effect-form-actions">
                     <button className="logs-button" onClick={handleEditSave} disabled={editSaving}>
                       {editSaving ? "Saving…" : "Save"}
                     </button>
@@ -174,25 +155,24 @@ export function EffectLibrarySection({ devices }: EffectLibrarySectionProps) {
                   </div>
                 </div>
               ) : (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", padding: "0.6rem 0.75rem" }}>
+                <div className="effect-item">
                   <div>
-                    <div style={{ fontWeight: 600, marginBottom: "0.15rem" }}>{effect.name}</div>
-                    <div style={{ fontSize: "0.75rem", color: "#888", fontFamily: "monospace" }}>
+                    <div className="effect-item-name">{effect.name}</div>
+                    <div className="effect-item-meta">
                       {effect.capturedFromIp ?? "built-in"} · {new Date(effect.capturedAt).toLocaleDateString()}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: "0.25rem" }}>
+                  <div className="effect-item-actions">
                     <button
                       onClick={() => startEdit(effect)}
-                      className="logs-button"
-                      style={{ fontSize: "0.8rem", padding: "0.2rem 0.5rem" }}
+                      className="logs-button btn-icon"
                       title="Edit effect"
                     >
                       ✏️
                     </button>
                     <button
                       onClick={() => handleDelete(effect.name)}
-                      style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: "1.1rem", padding: "0.2rem 0.4rem", lineHeight: 1 }}
+                      className="btn-ghost"
                       title="Delete effect"
                     >
                       ×
@@ -205,24 +185,16 @@ export function EffectLibrarySection({ devices }: EffectLibrarySectionProps) {
         </div>
       )}
 
-      <div style={{ borderTop: "1px solid #333", paddingTop: "1rem" }}>
-        <p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", color: "#aaa" }}>
+      <div className="effect-capture-section">
+        <p className="effect-capture-hint">
           Set your WLED device to the desired effect using its web UI, then capture it here.
         </p>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div className="effect-capture-row">
           <select
             value={captureIp}
             onChange={(e) => setCaptureIp(e.target.value)}
             disabled={capturing || devices.length === 0}
-            style={{
-              background: "#242424",
-              border: "1px solid #444",
-              borderRadius: "6px",
-              color: "#fff",
-              padding: "0.4rem 0.6rem",
-              fontSize: "0.9rem",
-              minWidth: "10rem",
-            }}
+            className="effect-capture-select"
           >
             {devices.length === 0 ? (
               <option value="">No devices found</option>
@@ -239,16 +211,7 @@ export function EffectLibrarySection({ devices }: EffectLibrarySectionProps) {
             onChange={(e) => setCaptureName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleCapture(); }}
             disabled={capturing}
-            style={{
-              flex: 1,
-              minWidth: "8rem",
-              background: "#242424",
-              border: "1px solid #444",
-              borderRadius: "6px",
-              color: "#fff",
-              padding: "0.4rem 0.6rem",
-              fontSize: "0.9rem",
-            }}
+            className="effect-capture-input"
           />
           <button
             className="logs-button"
@@ -260,9 +223,7 @@ export function EffectLibrarySection({ devices }: EffectLibrarySectionProps) {
         </div>
       </div>
 
-      {message && (
-        <div className="warning-message" style={{ marginTop: "0.75rem" }}>{message}</div>
-      )}
+      {message && <div className="warning-message">{message}</div>}
     </div>
   );
 }

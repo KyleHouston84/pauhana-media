@@ -110,76 +110,50 @@ export function VideoControls() {
       )}
 
       <div className="button-grid">
-        <button
-          className="trigger-button"
-          onClick={handlePlay}
-          disabled={loading}
-        >
+        <button className="trigger-button" onClick={handlePlay} disabled={loading}>
           ▶️ Play
         </button>
-        <button
-          className="trigger-button"
-          onClick={handlePause}
-          disabled={loading}
-        >
+        <button className="trigger-button" onClick={handlePause} disabled={loading}>
           ⏸️ Pause
         </button>
       </div>
 
-      <form onSubmit={handleSeek} style={{ marginTop: "1rem" }}>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+      <form onSubmit={handleSeek} className="seek-form">
+        <div className="seek-row">
           <input
             type="text"
             placeholder="MM:SS or HH:MM:SS"
             value={seekTime}
             onChange={(e) => setSeekTime(e.target.value)}
-            style={{
-              flex: 1,
-              padding: "0.5rem",
-              fontSize: "1rem",
-              border: "2px solid #8B4789",
-              borderRadius: "8px",
-              background: "rgba(255, 255, 255, 0.1)",
-              color: "#fff",
-            }}
+            className="seek-input"
           />
-          <button
-            type="submit"
-            className="trigger-button"
-            disabled={loading || !seekTime}
-          >
+          <button type="submit" className="trigger-button" disabled={loading || !seekTime}>
             Seek
           </button>
         </div>
       </form>
 
-      <div style={{ marginTop: "1rem" }}>
-        <p style={{ marginBottom: "0.5rem", opacity: 0.8 }}>Quick Seek:</p>
+      <div className="quick-seek">
+        <p className="quick-seek-label">Quick Seek:</p>
         <div className="button-grid">
           <button
-            className="trigger-button"
+            className="trigger-button btn-small"
             onClick={() => quickSeek("0:00")}
             disabled={loading}
-            style={{ fontSize: "0.9rem" }}
           >
             Start (0:00)
           </button>
           <button
-            className="trigger-button eruption"
+            className="trigger-button eruption btn-small"
             onClick={() => quickSeek("30:41")}
             disabled={loading}
-            style={{ fontSize: "0.9rem" }}
           >
             Eruption (30:41)
           </button>
         </div>
       </div>
 
-      {message && (
-        <div className="warning-message" style={{ marginTop: "1rem" }}>
-          {message}
-        </div>
-      )}
+      {message && <div className="warning-message">{message}</div>}
     </div>
   );
 }

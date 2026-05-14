@@ -494,6 +494,474 @@ input:disabled + .toggle-slider {
   word-wrap: break-word;
 }
 
+/* ===== Shared utilities ===== */
+
+.warning-message {
+  margin-top: 1rem;
+}
+
+.card-footer {
+  margin-top: 1rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.card-actions .trigger-button {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  justify-content: center;
+}
+
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.page-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-back-link {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.btn-link {
+  text-decoration: none;
+}
+
+.btn-inline {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  margin: 0;
+  min-width: 5rem;
+}
+
+.btn-small {
+  font-size: 0.9rem;
+}
+
+.btn-icon {
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.btn-ghost {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+  line-height: 1;
+}
+
+.btn-full {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.btn-block {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.is-toggling {
+  opacity: 0.5;
+}
+
+/* ===== Card header (icon + title + actions) ===== */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 0.5rem;
+}
+
+.card-header-icon {
+  font-size: 1.2rem;
+}
+
+.card-header-title {
+  margin: 0;
+  font-size: 1.3rem;
+  flex: 1;
+  border: none;
+  padding-bottom: 0;
+}
+
+.card-name-input {
+  flex: 1;
+  background: #242424;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* ===== Status value variants ===== */
+
+.status-mono {
+  font-family: monospace;
+}
+
+.status-muted {
+  color: #888;
+}
+
+/* ===== WLED Devices card ===== */
+
+.device-ip {
+  font-family: monospace;
+  font-size: 0.85em;
+}
+
+.all-lights-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.all-lights-label {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* ===== WLEDConfig page ===== */
+
+.all-lights-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #ccc;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+/* ===== Event Config card ===== */
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.event-name {
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.event-status {
+  font-size: 0.8rem;
+  min-width: 3.5rem;
+  text-align: right;
+  color: #888;
+}
+
+.event-status--enabled {
+  color: #4ade80;
+}
+
+/* ===== Video Controls ===== */
+
+.seek-form {
+  margin-top: 1rem;
+}
+
+.seek-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.seek-input {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 2px solid #8B4789;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.quick-seek {
+  margin-top: 1rem;
+}
+
+.quick-seek-label {
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+/* ===== Effect Library ===== */
+
+.effect-library {
+  margin-top: 2rem;
+}
+
+.effect-library > h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+}
+
+.effect-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.effect-placeholder {
+  margin: 0.5rem 0 1rem;
+}
+
+.effect-edit-form {
+  background: #1a1a1a;
+  border: 1px solid #667eea;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.effect-form-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.effect-form-input {
+  flex: 1;
+  min-width: 8rem;
+  background: #242424;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.effect-form-select {
+  flex: 1;
+  background: #242424;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.effect-form-select--empty {
+  color: #666;
+}
+
+.effect-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.effect-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+
+.effect-item-name {
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.effect-item-meta {
+  font-size: 0.75rem;
+  color: #888;
+  font-family: monospace;
+}
+
+.effect-item-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.effect-capture-section {
+  border-top: 1px solid #333;
+  padding-top: 1rem;
+}
+
+.effect-capture-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.effect-capture-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.effect-capture-select {
+  background: #242424;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  min-width: 10rem;
+}
+
+.effect-capture-input {
+  flex: 1;
+  min-width: 8rem;
+  background: #242424;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+/* ===== Events Config page ===== */
+
+.event-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 0.5rem;
+}
+
+.event-card-title {
+  margin: 0;
+  font-size: 1.4rem;
+  border: none;
+  padding-bottom: 0;
+}
+
+.number-input {
+  width: 5rem;
+  background: #242424;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.seek-time-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.seek-time-input {
+  width: 6rem;
+  font-family: monospace;
+}
+
+.seek-time-input--dimmed {
+  opacity: 0.35;
+}
+
+.wled-section {
+  margin-top: 1.25rem;
+  border-top: 1px solid #333;
+  padding-top: 1rem;
+}
+
+.wled-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #ddd;
+}
+
+.assignment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.assignment-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #242424;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #333;
+}
+
+.assignment-name {
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assignment-select {
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #aaa;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.78rem;
+  font-family: monospace;
+  max-width: 9rem;
+  flex-shrink: 0;
+}
+
+.assignment-remove {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.add-device-select {
+  width: 100%;
+  background: #242424;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #aaa;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 /* Custom scrollbar for logs */
 .logs-container::-webkit-scrollbar {
   width: 10px;

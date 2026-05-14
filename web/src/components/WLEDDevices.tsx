@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getWLEDDevices, discoverWLEDDevices } from "../api";
+import { getWLEDDevices, discoverWLEDDevices, setWLEDPower } from "../api";
 import type { WLEDDevice } from "../api";
 
 export function WLEDDevices() {
   const [devices, setDevices] = useState<WLEDDevice[]>([]);
   const [loading, setLoading] = useState(false);
   const [discovering, setDiscovering] = useState(false);
+  const [powering, setPowering] = useState(false);
+  const [allOn, setAllOn] = useState(false);
   const [message, setMessage] = useState("");
 
   const showMessage = (msg: string) => {
@@ -44,6 +46,20 @@ export function WLEDDevices() {
     }
   };
 
+  const handlePowerAll = async (on: boolean) => {
+    if (devices.length === 0) return;
+    setPowering(true);
+    setAllOn(on);
+    try {
+      await Promise.all(devices.map((d) => setWLEDPower(d.ip, on)));
+    } catch {
+      showMessage("Some devices failed to respond");
+      setAllOn(!on);
+    } finally {
+      setPowering(false);
+    }
+  };
+
   return (
     <div className="card">
       <h2>💡 WLED Devices {!loading && `(${devices.length})`}</h2>
@@ -57,35 +73,39 @@ export function WLEDDevices() {
           {devices.map((device) => (
             <div key={device.ip} className="status-item">
               <span className="status-label">{device.name}</span>
-              <span className="status-value" style={{ fontFamily: "monospace", fontSize: "0.85em" }}>{device.ip}</span>
+              <span className="status-value device-ip">{device.ip}</span>
             </div>
           ))}
         </div>
       )}
 
-      <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem" }}>
+      <div className="all-lights-row">
+        <span className="all-lights-label">All Lights</span>
+        <label className="toggle-switch" title={allOn ? "Turn all off" : "Turn all on"}>
+          <input
+            type="checkbox"
+            checked={allOn}
+            onChange={(e) => handlePowerAll(e.target.checked)}
+            disabled={powering || devices.length === 0}
+          />
+          <span className="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div className="card-actions">
         <button
           className="trigger-button"
           onClick={handleDiscover}
           disabled={discovering}
-          style={{ flex: 1 }}
         >
           {discovering ? "Scanning network..." : "🔍 Re-discover"}
         </button>
-        <Link
-          to="/wled"
-          className="trigger-button"
-          style={{ flex: 1, textAlign: "center", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
+        <Link to="/wled" className="trigger-button">
           ⚙️ Configure
         </Link>
       </div>
 
-      {message && (
-        <div className="warning-message" style={{ marginTop: "1rem" }}>
-          {message}
-        </div>
-      )}
+      {message && <div className="warning-message">{message}</div>}
     </div>
   );
 }

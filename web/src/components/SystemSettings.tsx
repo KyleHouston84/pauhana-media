@@ -22,7 +22,6 @@ export function SystemSettings() {
     fetchRandomEventsState();
   }, []);
 
-  // Update countdown every second and refetch next event time every 30 seconds
   useEffect(() => {
     const updateCountdown = () => {
       if (!randomEventsEnabled) {
@@ -116,13 +115,9 @@ export function SystemSettings() {
         </div>
       </div>
 
-      {message && (
-        <div className="warning-message" style={{ marginTop: "1rem" }}>
-          {message}
-        </div>
-      )}
+      {message && <div className="warning-message">{message}</div>}
 
-      <p className="placeholder-text" style={{ marginTop: "1rem" }}>
+      <p className="placeholder-text card-footer">
         Coming soon: Volume controls, event intervals, WLED configuration
       </p>
     </div>
