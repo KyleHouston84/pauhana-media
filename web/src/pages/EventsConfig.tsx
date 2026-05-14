@@ -25,7 +25,7 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
   const [durationSec, setDurationSec] = useState(String(config.durationSec));
   const [videoSeekTime, setVideoSeekTime] = useState(config.videoSeekTime ?? "");
   const [videoSeekEnabled, setVideoSeekEnabled] = useState(config.videoSeekTime !== null);
-  const [assignments, setAssignments] = useState<EventWLEDDeviceAssignment[]>(config.wled.devices);
+  const [assignments, setAssignments] = useState<EventWLEDDeviceAssignment[]>(config.wled?.devices ?? []);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -35,7 +35,7 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
     setDurationSec(String(config.durationSec));
     setVideoSeekTime(config.videoSeekTime ?? "");
     setVideoSeekEnabled(config.videoSeekTime !== null);
-    setAssignments(config.wled.devices);
+    setAssignments(config.wled?.devices ?? []);
   }, [config]);
 
   const showMessage = (msg: string) => {
@@ -43,12 +43,17 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const effectNames = Object.keys(allEffects);
-  const defaultEffect = effectNames[0] ?? "";
+  const getCompatibleEffects = (deviceName: string): string[] => {
+    const device = allDevices.find((d) => d.name === deviceName);
+    return Object.entries(allEffects)
+      .filter(([, e]) => !e.capturedFromIp || e.capturedFromIp === device?.ip)
+      .map(([name]) => name);
+  };
 
   const handleAddDevice = (deviceName: string) => {
     if (!deviceName || assignments.some((a) => a.name === deviceName)) return;
-    setAssignments((prev) => [...prev, { name: deviceName, effect: defaultEffect }]);
+    const compatible = getCompatibleEffects(deviceName);
+    setAssignments((prev) => [...prev, { name: deviceName, effect: compatible[0] ?? "" }]);
   };
 
   const handleRemoveDevice = (deviceName: string) => {
@@ -169,7 +174,10 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
           <p className="placeholder-text">No devices assigned</p>
         ) : (
           <div className="assignment-list">
-            {assignments.map((assignment) => (
+            {assignments.map((assignment) => {
+              const compatibleEffects = getCompatibleEffects(assignment.name);
+              const isIncompatible = assignment.effect && !compatibleEffects.includes(assignment.effect);
+              return (
               <div key={assignment.name} className="assignment-item">
                 <span className="assignment-name">💡 {assignment.name}</span>
                 <select
@@ -178,10 +186,13 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
                   disabled={saving}
                   className="assignment-select"
                 >
-                  {!effectNames.includes(assignment.effect) && (
-                    <option value={assignment.effect}>{assignment.effect}</option>
+                  {compatibleEffects.length === 0 && !isIncompatible && (
+                    <option value="">No compatible effects — capture one first</option>
                   )}
-                  {effectNames.map((name) => (
+                  {isIncompatible && (
+                    <option value={assignment.effect}>{assignment.effect} (incompatible)</option>
+                  )}
+                  {compatibleEffects.map((name) => (
                     <option key={name} value={name}>{name}</option>
                   ))}
                 </select>
@@ -194,7 +205,8 @@ function EventCard({ type, config, allDevices, allEffects, onSave }: EventCardPr
                   ×
                 </button>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 

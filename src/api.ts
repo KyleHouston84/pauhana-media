@@ -308,6 +308,7 @@ app.post("/wled/devices/:ip/rename", async (req: Request, res: Response): Promis
     }
     const oldName = device.name;
     device.name = name;
+    pauhanaWLED.persistDevices();
 
     // Cascade rename into any event WLED device assignments
     const events = getEventSettings();

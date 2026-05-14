@@ -861,7 +861,7 @@ h2.card-header-title {
   padding-bottom: 0.5rem;
 }
 
-.event-card-title {
+h2.event-card-title {
   margin: 0;
   font-size: 1.4rem;
   border: none;

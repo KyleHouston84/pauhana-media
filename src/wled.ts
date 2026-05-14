@@ -53,11 +53,13 @@ export class PauHanaWLED {
   async discover(): Promise<WLEDDevice[]> {
     const fresh = await discoverWLED();
 
-    // Merge: fresh discovery takes precedence by name; any stored device not
-    // found this scan is kept as a fallback (handles transient WiFi blips).
-    const freshNames = new Set(fresh.map((d) => d.name));
+    // Merge by IP: fresh discovery wins for any IP it found; stored devices
+    // whose IP wasn't seen this scan are kept as fallback (handles WiFi blips).
+    // Merging by IP (not name) prevents stale-named duplicates when a device
+    // is renamed outside of Pau Hana.
+    const freshIPs = new Set(fresh.map((d) => d.ip));
     const stored = loadStoredDevices();
-    const fallback = stored.filter((d) => !freshNames.has(d.name));
+    const fallback = stored.filter((d) => !freshIPs.has(d.ip));
     this.devices = [...fresh, ...fallback];
 
     if (this.devices.length > 0) {
@@ -68,6 +70,10 @@ export class PauHanaWLED {
 
     saveDevices(this.devices);
     return this.devices;
+  }
+
+  persistDevices(): void {
+    saveDevices(this.devices);
   }
 
   // Assign devices to zones by name (or manually)
