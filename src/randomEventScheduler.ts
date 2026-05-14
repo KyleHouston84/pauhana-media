@@ -5,6 +5,7 @@ import {
 } from "./common/constants.js";
 import { snapshotSonos } from "./sonos.js";
 import { triggerEvent } from "./effectController.js";
+import { getEventSettings } from "./eventSettings.js";
 import type { EventType } from "./types/events.js";
 
 // Store timeout ID so we can cancel/reset the scheduler
@@ -30,11 +31,18 @@ export function scheduleRandomEvent(): void {
     try {
       const snap = await snapshotSonos();
       if (snap.state === "playing") {
-        const eventTypeArr = Object.keys(EVENTS) as EventType[];
-        const randomEventType =
-          eventTypeArr[Math.floor(Math.random() * eventTypeArr.length)];
-        console.log(`Bar is active — triggering ${randomEventType} 🌩️`);
-        await triggerEvent(randomEventType, true); // Mark as automatic trigger
+        const settings = getEventSettings();
+        const enabledEvents = (Object.keys(EVENTS) as EventType[]).filter(
+          (type) => settings[type]?.enabled !== false,
+        );
+        if (enabledEvents.length === 0) {
+          console.log("All events are disabled — skipping");
+        } else {
+          const randomEventType =
+            enabledEvents[Math.floor(Math.random() * enabledEvents.length)];
+          console.log(`Bar is active — triggering ${randomEventType} 🌩️`);
+          await triggerEvent(randomEventType, true); // Mark as automatic trigger
+        }
       } else {
         console.log("Bar inactive or storm already running — skipping");
       }
