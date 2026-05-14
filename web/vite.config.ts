@@ -1,53 +1,25 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      // Proxy API requests to backend during development
-      '/health': {
-        target: 'http://localhost:9001',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
-          });
-          proxy.on('proxyReq', (_proxyReq, req, _res) => {
-            console.log('Sending Request to the Target:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
-          });
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const backendTarget = env.BACKEND_URL ?? 'http://localhost:9001'
+
+  return {
+    plugins: [react()],
+    server: {
+      proxy: {
+        // Proxy all API routes to the backend (set BACKEND_URL in .env.development.local)
+        '^/(health|storm|erupt|logs|audio|video|wled|events|effects|settings)': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
         },
       },
-      '/storm': {
-        target: 'http://localhost:9001',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/erupt': {
-        target: 'http://localhost:9001',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/logs': {
-        target: 'http://localhost:9001',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/audio': {
-        target: 'http://localhost:9001',
-        changeOrigin: true,
-        secure: false,
-      },
     },
-  },
-  build: {
-    outDir: '../web-dist',
-    emptyOutDir: true,
-  },
+    build: {
+      outDir: '../web-dist',
+      emptyOutDir: true,
+    },
+  }
 })

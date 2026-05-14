@@ -7,3 +7,5 @@ video/
 web-dist/
 web-dist-old/
 event-settings.json
+wled-devices.json
+web/.env.development.local
