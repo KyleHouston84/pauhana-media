@@ -524,6 +524,10 @@ input:disabled + .toggle-slider {
   margin-bottom: 1.5rem;
 }
 
+.page-toolbar.flex-end {
+  justify-content: flex-end;
+}
+
 .page-toolbar-right {
   display: flex;
   align-items: center;
@@ -596,7 +600,7 @@ input:disabled + .toggle-slider {
   font-size: 1.2rem;
 }
 
-.card-header-title {
+h2.card-header-title {
   margin: 0;
   font-size: 1.3rem;
   flex: 1;
@@ -701,7 +705,7 @@ input:disabled + .toggle-slider {
   flex: 1;
   padding: 0.5rem;
   font-size: 1rem;
-  border: 2px solid #8B4789;
+  border: 2px solid #8b4789;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;

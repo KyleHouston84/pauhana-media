@@ -92,18 +92,6 @@ export function WLEDConfig() {
           ← Back to Admin
         </Link>
         <div className="page-toolbar-right">
-          <label className="all-lights-toggle" title={allOn ? "Turn all off" : "Turn all on"}>
-            All Lights
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={allOn}
-                onChange={(e) => handlePowerAll(e.target.checked)}
-                disabled={powering || loading || devices.length === 0}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </label>
           <button
             className="logs-button"
             onClick={handleDiscover}
@@ -112,6 +100,23 @@ export function WLEDConfig() {
             {discovering ? "Scanning network…" : "🔍 Re-discover"}
           </button>
         </div>
+      </div>
+      <div className="page-toolbar flex-end">
+        <label
+          className="all-lights-toggle"
+          title={allOn ? "Turn all off" : "Turn all on"}
+        >
+          All Lights
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={allOn}
+              onChange={(e) => handlePowerAll(e.target.checked)}
+              disabled={powering || loading || devices.length === 0}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+        </label>
       </div>
 
       {message && <div className="warning-message">{message}</div>}
