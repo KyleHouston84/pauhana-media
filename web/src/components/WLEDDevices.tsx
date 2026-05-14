@@ -51,10 +51,11 @@ export function WLEDDevices() {
     setPowering(true);
     setAllOn(on);
     try {
-      await Promise.all(devices.map((d) => setWLEDPower(d.ip, on)));
-    } catch {
-      showMessage("Some devices failed to respond");
-      setAllOn(!on);
+      const results = await Promise.allSettled(devices.map((d) => setWLEDPower(d.ip, on)));
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed > 0) {
+        showMessage(`${failed} device${failed > 1 ? "s" : ""} didn't respond`);
+      }
     } finally {
       setPowering(false);
     }

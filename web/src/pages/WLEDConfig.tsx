@@ -76,10 +76,19 @@ export function WLEDConfig() {
     if (devices.length === 0) return;
     setPowering(true);
     try {
-      await Promise.all(devices.map((d) => setWLEDPower(d.ip, on)));
-      setDevices((prev) => prev.map((d) => ({ ...d, on })));
-    } catch {
-      showMessage("Some devices failed to respond");
+      const results = await Promise.allSettled(
+        devices.map((d) => setWLEDPower(d.ip, on).then(() => d.ip)),
+      );
+      const succeeded = new Set(
+        results
+          .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+          .map((r) => r.value),
+      );
+      const failed = results.length - succeeded.size;
+      setDevices((prev) => prev.map((d) => (succeeded.has(d.ip) ? { ...d, on } : d)));
+      if (failed > 0) {
+        showMessage(`${failed} device${failed > 1 ? "s" : ""} didn't respond`);
+      }
     } finally {
       setPowering(false);
     }
