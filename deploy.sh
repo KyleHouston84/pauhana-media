@@ -68,6 +68,9 @@ rsync -avz --delete \
     --exclude '.env' \
     --exclude '*.log' \
     --exclude 'TYPESCRIPT_MIGRATION.md' \
+    --exclude 'event-settings.json' \
+    --exclude 'wled-devices.json' \
+    --exclude 'effect-library.json' \
     ./ ${PI_USER}@${PI_HOST}:${REMOTE_DIR}/
 
 echo -e "${GREEN}✅ Files synced${NC}"

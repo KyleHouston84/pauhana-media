@@ -5,7 +5,7 @@ import { LIGHTING, RED } from "./json/wledStates.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const LIBRARY_PATH = path.join(__dirname, "../../effect-library.json");
+const LIBRARY_PATH = path.join(__dirname, "../effect-library.json");
 
 export interface StoredEffect {
   name: string;

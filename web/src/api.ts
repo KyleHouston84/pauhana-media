@@ -113,6 +113,24 @@ export async function getVideoPosition(): Promise<VideoResponse> {
   return response.json();
 }
 
+export async function getDisplayPower(): Promise<{ ok: boolean; on: boolean }> {
+  const response = await fetch(`${API_BASE}/video/display`, {
+    headers: { 'X-API-Key': API_KEY },
+  });
+  if (!response.ok) throw new Error('Failed to get display power state');
+  return response.json();
+}
+
+export async function setDisplayPower(on: boolean): Promise<{ ok: boolean; on: boolean; message: string }> {
+  const response = await fetch(`${API_BASE}/video/display`, {
+    method: 'POST',
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ on }),
+  });
+  if (!response.ok) throw new Error('Failed to set display power state');
+  return response.json();
+}
+
 // Random Events Settings Functions
 export async function getRandomEventsEnabled(): Promise<RandomEventsResponse> {
   const response = await fetch(`${API_BASE}/settings/random-events`, {

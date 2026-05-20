@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
-import { playVideo, pauseVideo, seekVideo, getVideoPosition } from "../api";
+import {
+  playVideo,
+  pauseVideo,
+  seekVideo,
+  getVideoPosition,
+  getDisplayPower,
+  setDisplayPower,
+} from "../api";
 
 export function VideoControls() {
   const [videoPosition, setVideoPosition] = useState<number | null>(null);
   const [seekTime, setSeekTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [displayOn, setDisplayOn] = useState<boolean | null>(null);
+  const [displayToggling, setDisplayToggling] = useState(false);
 
   const fetchVideoPosition = async () => {
     try {
@@ -21,8 +30,25 @@ export function VideoControls() {
   useEffect(() => {
     fetchVideoPosition();
     const interval = setInterval(fetchVideoPosition, 5000);
+    getDisplayPower()
+      .then((d) => setDisplayOn(d.on))
+      .catch(() => {});
     return () => clearInterval(interval);
   }, []);
+
+  const handleDisplayToggle = async (on: boolean) => {
+    setDisplayToggling(true);
+    try {
+      const result = await setDisplayPower(on);
+      setDisplayOn(result.on);
+      showMessage(result.message);
+    } catch {
+      showMessage("Failed to toggle display");
+      console.error("Failed to toggle display");
+    } finally {
+      setDisplayToggling(false);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
@@ -98,7 +124,26 @@ export function VideoControls() {
 
   return (
     <div className="card">
-      <h2>🎬 Video Controls</h2>
+      <div className="card-header">
+        <h2 className="card-header-title">🎬 Video Controls</h2>
+        {displayOn !== null && (
+          <label
+            className="all-lights-toggle"
+            title={displayOn ? "Turn display off" : "Turn display on"}
+          >
+            Display
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={displayOn}
+                onChange={(e) => handleDisplayToggle(e.target.checked)}
+                disabled={displayToggling}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </label>
+        )}
+      </div>
 
       {videoPosition !== null && (
         <div className="status-grid">
@@ -110,10 +155,18 @@ export function VideoControls() {
       )}
 
       <div className="button-grid">
-        <button className="trigger-button" onClick={handlePlay} disabled={loading}>
+        <button
+          className="trigger-button"
+          onClick={handlePlay}
+          disabled={loading}
+        >
           ▶️ Play
         </button>
-        <button className="trigger-button" onClick={handlePause} disabled={loading}>
+        <button
+          className="trigger-button"
+          onClick={handlePause}
+          disabled={loading}
+        >
           ⏸️ Pause
         </button>
       </div>
@@ -127,7 +180,11 @@ export function VideoControls() {
             onChange={(e) => setSeekTime(e.target.value)}
             className="seek-input"
           />
-          <button type="submit" className="trigger-button" disabled={loading || !seekTime}>
+          <button
+            type="submit"
+            className="trigger-button"
+            disabled={loading || !seekTime}
+          >
             Seek
           </button>
         </div>

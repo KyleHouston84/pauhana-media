@@ -1,6 +1,10 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import { exec } from "child_process";
+import { promisify } from "util";
 import express, { Request, Response, NextFunction } from "express";
+
+const execAsync = promisify(exec);
 import cors from "cors";
 import { triggerEvent, isEventHappening } from "./effectController.js";
 import { getLogs } from "./logs.js";
@@ -176,6 +180,35 @@ app.get("/video/position", async (_req: Request, res: Response): Promise<void> =
     res.json({ ok: true, position });
   } catch (err) {
     res.status(500).json({ ok: false, message: "Failed to get video position", error: String(err) });
+  }
+});
+
+app.get("/video/display", async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const { stdout } = await execAsync("systemctl is-active pauhana-video.service");
+    const on = stdout.trim() === "active";
+    res.json({ ok: true, on });
+  } catch {
+    // is-active exits non-zero when inactive — that's still a valid answer
+    res.json({ ok: true, on: false });
+  }
+});
+
+app.post("/video/display", async (req: Request, res: Response): Promise<void> => {
+  const { on } = req.body as { on?: unknown };
+  if (typeof on !== "boolean") {
+    res.status(400).json({ ok: false, message: "'on' must be a boolean" });
+    return;
+  }
+  try {
+    if (on) {
+      await execAsync("sudo systemctl start pauhana-video.service");
+    } else {
+      await execAsync("sudo systemctl stop pauhana-video.service");
+    }
+    res.json({ ok: true, on, message: on ? "Display on" : "Display off" });
+  } catch (err) {
+    res.status(503).json({ ok: false, message: "Failed to control display", error: String(err) });
   }
 });
 
