@@ -257,6 +257,16 @@ export async function setWLEDPower(ip: string, on: boolean): Promise<{ ok: boole
   return response.json();
 }
 
+export async function setWLEDBrightness(ip: string, brightness: number): Promise<{ ok: boolean; brightness: number; message: string }> {
+  const response = await fetch(`${API_BASE}/wled/devices/${ip}/brightness`, {
+    method: 'POST',
+    headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ brightness }),
+  });
+  if (!response.ok) throw new Error('Failed to set brightness');
+  return response.json();
+}
+
 export async function renameWLEDDevice(ip: string, name: string): Promise<{ ok: boolean; message: string }> {
   const response = await fetch(`${API_BASE}/wled/devices/${ip}/rename`, {
     method: 'POST',

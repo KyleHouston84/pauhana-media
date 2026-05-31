@@ -6,6 +6,7 @@ import {
   getWLEDDeviceInfo,
   renameWLEDDevice,
   setWLEDPower,
+  setWLEDBrightness,
 } from "../api";
 import type { WLEDDeviceInfo } from "../api";
 import { DeviceCard } from "../components/DeviceCard";
@@ -26,7 +27,7 @@ export function WLEDConfig() {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const loadDevices = async () => {
+  const loadDevices = async (filterOffline = false) => {
     setLoading(true);
     try {
       const { devices: list } = await getWLEDDevices();
@@ -37,7 +38,7 @@ export function WLEDConfig() {
           ),
         ),
       );
-      setDevices(infos);
+      setDevices(filterOffline ? infos.filter((d) => d.ledCount !== undefined) : infos);
     } catch (err) {
       console.error("Failed to load WLED devices:", err);
     } finally {
@@ -54,7 +55,7 @@ export function WLEDConfig() {
     try {
       const data = await discoverWLEDDevices();
       showMessage(data.message || `Found ${data.count} device(s)`);
-      await loadDevices();
+      await loadDevices(true);
     } catch {
       showMessage("Discovery failed");
     } finally {
@@ -70,6 +71,11 @@ export function WLEDConfig() {
   const handlePowerChange = async (ip: string, on: boolean) => {
     await setWLEDPower(ip, on);
     setDevices((prev) => prev.map((d) => (d.ip === ip ? { ...d, on } : d)));
+  };
+
+  const handleBrightnessChange = async (ip: string, brightness: number) => {
+    await setWLEDBrightness(ip, brightness);
+    setDevices((prev) => prev.map((d) => (d.ip === ip ? { ...d, brightness } : d)));
   };
 
   const handlePowerAll = async (on: boolean) => {
@@ -144,6 +150,7 @@ export function WLEDConfig() {
               device={device}
               onRename={handleRename}
               onPowerChange={handlePowerChange}
+              onBrightnessChange={handleBrightnessChange}
             />
           ))}
         </div>

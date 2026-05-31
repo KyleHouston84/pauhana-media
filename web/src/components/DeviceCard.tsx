@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { rssiLabel, brightnessPercent } from "../utils/wledHelpers";
+import { rssiLabel } from "../utils/wledHelpers";
 import type { WLEDDeviceInfo } from "../api";
 
 interface DeviceCardProps {
   device: WLEDDeviceInfo;
   onRename: (ip: string, name: string) => Promise<void>;
   onPowerChange: (ip: string, on: boolean) => Promise<void>;
+  onBrightnessChange: (ip: string, brightness: number) => Promise<void>;
 }
 
-export function DeviceCard({ device, onRename, onPowerChange }: DeviceCardProps) {
+export function DeviceCard({ device, onRename, onPowerChange, onBrightnessChange }: DeviceCardProps) {
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState(device.name);
   const [saving, setSaving] = useState(false);
   const [powerToggling, setPowerToggling] = useState(false);
+  const [brightnessValue, setBrightnessValue] = useState(device.brightness ?? 128);
   const [message, setMessage] = useState("");
 
   const showMessage = (msg: string) => {
@@ -58,10 +60,16 @@ export function DeviceCard({ device, onRename, onPowerChange }: DeviceCardProps)
     }
   };
 
+  const isOnline = device.ledCount !== undefined;
+
   return (
     <div className="card">
       <div className="card-header">
         <span className="card-header-icon">💡</span>
+        <span
+          className={`status-dot ${isOnline ? "status-dot--online" : "status-dot--offline"}`}
+          title={isOnline ? "Online" : "Offline"}
+        />
         {editing ? (
           <>
             <input
@@ -126,9 +134,26 @@ export function DeviceCard({ device, onRename, onPowerChange }: DeviceCardProps)
             </label>
           )}
         </div>
-        <div className="status-item">
+        <div className="status-item status-item--full">
           <span className="status-label">Brightness</span>
-          <span className="status-value">{brightnessPercent(device.brightness)}</span>
+          {device.brightness === undefined ? (
+            <span className="status-value status-muted">—</span>
+          ) : (
+            <div className="brightness-control">
+              <input
+                type="range"
+                min={0}
+                max={255}
+                value={brightnessValue}
+                onChange={(e) => setBrightnessValue(Number(e.target.value))}
+                onMouseUp={(e) => onBrightnessChange(device.ip, Number((e.target as HTMLInputElement).value)).catch(() => showMessage("Failed to set brightness"))}
+                onTouchEnd={(e) => onBrightnessChange(device.ip, Number((e.target as HTMLInputElement).value)).catch(() => showMessage("Failed to set brightness"))}
+                className="brightness-slider"
+                disabled={!device.on}
+              />
+              <span className="brightness-pct">{Math.round((brightnessValue / 255) * 100)}%</span>
+            </div>
+          )}
         </div>
         <div className="status-item">
           <span className="status-label">LEDs</span>

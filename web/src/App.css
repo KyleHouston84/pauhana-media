@@ -635,6 +635,52 @@ h2.card-header-title {
   font-size: 0.85em;
 }
 
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot--online {
+  background-color: #4caf50;
+}
+
+.status-dot--offline {
+  background-color: #f44336;
+}
+
+.status-item--full {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.brightness-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.brightness-slider {
+  flex: 1;
+  accent-color: #e8c36a;
+  cursor: pointer;
+}
+
+.brightness-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.brightness-pct {
+  min-width: 3ch;
+  text-align: right;
+  font-size: 0.9em;
+  color: #aaa;
+}
+
 .all-lights-row {
   display: flex;
   align-items: center;

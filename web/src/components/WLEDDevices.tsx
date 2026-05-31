@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { getWLEDDevices, discoverWLEDDevices, setWLEDPower } from "../api";
 import type { WLEDDevice } from "../api";
 
+const HEARTBEAT_INTERVAL_MS = 30 * 60 * 1000;
+
 export function WLEDDevices() {
   const [devices, setDevices] = useState<WLEDDevice[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [discovering, setDiscovering] = useState(false);
   const [powering, setPowering] = useState(false);
   const [allOn, setAllOn] = useState(false);
@@ -22,7 +24,7 @@ export function WLEDDevices() {
       const data = await getWLEDDevices();
       setDevices(data.devices);
     } catch (err) {
-      console.error("Failed to fetch WLED devices:", err);
+      console.error("Failed to load WLED devices:", err);
     } finally {
       setLoading(false);
     }
@@ -30,6 +32,12 @@ export function WLEDDevices() {
 
   useEffect(() => {
     fetchDevices();
+    const interval = setInterval(() => {
+      discoverWLEDDevices()
+        .then((data) => setDevices(data.devices))
+        .catch(() => {});
+    }, HEARTBEAT_INTERVAL_MS);
+    return () => clearInterval(interval);
   }, []);
 
   const handleDiscover = async () => {
@@ -63,7 +71,7 @@ export function WLEDDevices() {
 
   return (
     <div className="card">
-      <h2>💡 WLED Devices {!loading && `(${devices.length})`}</h2>
+      <h2>💡 WLED Devices {!loading && !discovering && `(${devices.length})`}</h2>
 
       {loading ? (
         <p className="placeholder-text">Loading devices...</p>
@@ -101,7 +109,7 @@ export function WLEDDevices() {
         >
           {discovering ? "Scanning network..." : "🔍 Re-discover"}
         </button>
-        <Link to="/wled" className="trigger-button">
+        <Link to="/admin/wled" className="trigger-button">
           ⚙️ Configure
         </Link>
       </div>

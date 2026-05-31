@@ -316,6 +316,35 @@ app.get("/wled/devices/:ip/info", async (req: Request, res: Response): Promise<v
   }
 });
 
+app.post("/wled/devices/:ip/brightness", async (req: Request, res: Response): Promise<void> => {
+  const { ip } = req.params;
+  const knownDevice = pauhanaWLED.devices.find((d) => d.ip === ip);
+  if (!knownDevice) {
+    res.status(404).json({ ok: false, message: "Device not found" });
+    return;
+  }
+  const { brightness } = req.body;
+  if (typeof brightness !== "number" || brightness < 0 || brightness > 255) {
+    res.status(400).json({ ok: false, message: "'brightness' must be a number 0–255" });
+    return;
+  }
+  try {
+    const response = await fetch(`http://${ip}/json/state`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bri: brightness }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!response.ok) {
+      res.status(500).json({ ok: false, message: "Device rejected command" });
+      return;
+    }
+    res.json({ ok: true, brightness, message: `Brightness set to ${brightness}` });
+  } catch (err) {
+    res.status(503).json({ ok: false, message: "Device unreachable", error: String(err) });
+  }
+});
+
 app.post("/wled/devices/:ip/rename", async (req: Request, res: Response): Promise<void> => {
   const { ip } = req.params;
   const { name } = req.body;

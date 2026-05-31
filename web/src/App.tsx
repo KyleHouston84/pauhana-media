@@ -17,7 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/wled" element={<WLEDConfig />} />
+          <Route path="/admin/wled" element={<WLEDConfig />} />
           <Route path="/admin/events" element={<EventsConfig />} />
         </Routes>
 
