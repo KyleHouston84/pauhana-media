@@ -56,7 +56,10 @@ app.use("/audio", express.static(AUDIO_DIR));
 
 // Serve React dashboard (production)
 const WEB_DIR = path.join(__dirname, "../web-dist");
-app.use(express.static(WEB_DIR));
+// Hashed assets (JS/CSS) can be cached long-term; index.html must never be cached
+// so browsers always fetch the latest entry point after a deploy.
+app.use("/assets", express.static(path.join(WEB_DIR, "assets"), { maxAge: "1y", immutable: true }));
+app.use(express.static(WEB_DIR, { maxAge: 0, etag: false }));
 
 // Health check
 app.get("/health", async (_req: Request, res: Response) => {
@@ -538,6 +541,7 @@ app.delete("/effects/:name", (req: Request, res: Response): void => {
 // Catch-all route for React Router - must be last!
 // Serves index.html for all non-API routes to support client-side routing
 app.use((_req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.sendFile(path.join(WEB_DIR, "index.html"));
 });
 
